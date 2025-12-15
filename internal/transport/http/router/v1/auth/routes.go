@@ -3,7 +3,7 @@ package auth
 import (
 	"github.com/labstack/echo/v4"
 
-	authHTTP "example.com/your-api/internal/modules/auth/http"
+	authHTTP "example.com/your-api/internal/modules/auth/transport/http"
 )
 
 func Register(g *echo.Group) {

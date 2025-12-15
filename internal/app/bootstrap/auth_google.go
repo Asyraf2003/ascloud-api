@@ -8,8 +8,8 @@ import (
 	authPkg "example.com/your-api/internal/platform/datastore/postgres/auth"
 
 	"example.com/your-api/internal/config"
-	authHTTP "example.com/your-api/internal/modules/auth/http"
 	"example.com/your-api/internal/modules/auth/ports"
+	authHTTP "example.com/your-api/internal/modules/auth/transport/http"
 	"example.com/your-api/internal/modules/auth/usecase"
 	"example.com/your-api/internal/platform/google"
 	memstate "example.com/your-api/internal/platform/state/memory"
