@@ -46,7 +46,7 @@ check_imports() {
     # USECASE: forbid platform/http/app/config
     if is_usecase_pkg "$pkg"; then
       if [[ "$imp" == "$MOD/internal/platform/"* ]] ||
-         [[ "$imp" == "$MOD/internal/http/"* ]] ||
+         [[ "$imp" == "$MOD/internal/transport/http/"* ]] ||
          [[ "$imp" == "$MOD/internal/app/"* ]] ||
          [[ "$imp" == "$MOD/internal/config"* ]]; then
         bad "$pkg imports forbidden: $imp"
@@ -60,11 +60,11 @@ check_imports() {
       fi
     fi
 
-    # PLATFORM: forbid modules usecase/http + internal/http/app
+    # PLATFORM: forbid modules usecase/http + internal/transport/http/app
     if is_platform_pkg "$pkg"; then
       if [[ "$imp" == "$MOD/internal/modules/"*"/usecase" ]] ||
          [[ "$imp" == "$MOD/internal/modules/"*"/http" ]] ||
-         [[ "$imp" == "$MOD/internal/http/"* ]] ||
+         [[ "$imp" == "$MOD/internal/transport/http/"* ]] ||
          [[ "$imp" == "$MOD/internal/app/"* ]]; then
         bad "$pkg imports forbidden: $imp"
       fi

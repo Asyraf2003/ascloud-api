@@ -14,9 +14,9 @@ TASK
 - [TULIS TASK]
 
 SNAPSHOT WAJIB (saya akan paste output)
-- tree -L 6 internal/http
+- tree -L 6 internal/transport/http
 - tree -L 6 internal/modules/[TARGET]
-- cat internal/http/router/v1/router.go
-- cat internal/http/presenter/error.go
-- rg -n "^package " internal/http/router
+- cat internal/transport/http/router/v1/router.go
+- cat internal/transport/http/presenter/error.go
+- rg -n "^package " internal/transport/http/router
 - [EXTRA FILES]

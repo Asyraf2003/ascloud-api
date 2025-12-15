@@ -10,9 +10,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"example.com/your-api/internal/http/presenter"
 	"example.com/your-api/internal/modules/auth/ports"
 	j "example.com/your-api/internal/platform/token/jwt"
+	"example.com/your-api/internal/transport/http/presenter"
 )
 
 func TestJWTAuth_OK(t *testing.T) {

@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 
-	"example.com/your-api/internal/http/middleware"
-	"example.com/your-api/internal/http/presenter"
+	"example.com/your-api/internal/transport/http/middleware"
+	"example.com/your-api/internal/transport/http/presenter"
 )
 
 // New membuat instance Echo + middleware global.

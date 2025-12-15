@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"example.com/your-api/internal/http/middleware"
+	"example.com/your-api/internal/transport/http/middleware"
 )
 
 func Register(g *echo.Group) {

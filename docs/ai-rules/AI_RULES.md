@@ -16,9 +16,9 @@ Tujuan: perubahan konsisten, scalable, minim efek berantai, dan lolos audit.
 
 ## Non-negotiables (Hard Rules)
 1) Jangan ubah signature publik ini:
-   - `internal/http/router.Register(*echo.Echo)`
-   - `internal/http/router/v1.Register(*echo.Echo)` (atau `v1.Register(*echo.Echo)` sesuai implementasi)
-   - `internal/http/presenter.HTTPErrorHandler(error, echo.Context)`
+   - `internal/transport/http/router.Register(*echo.Echo)`
+   - `internal/transport/http/router/v1.Register(*echo.Echo)` (atau `v1.Register(*echo.Echo)` sesuai implementasi)
+   - `internal/transport/http/presenter.HTTPErrorHandler(error, echo.Context)`
 
 2) 1 folder = 1 package (tidak boleh campur package dalam satu folder).
 
@@ -43,7 +43,7 @@ Tujuan: perubahan konsisten, scalable, minim efek berantai, dan lolos audit.
 ---
 
 ## Architecture Boundaries (Anti efek berantai)
-- HTTP layer (`internal/http/...`) hanya:
+- HTTP layer (`internal/transport/http/...`) hanya:
   - parse request
   - validasi ringan
   - panggil usecase
@@ -52,7 +52,7 @@ Tujuan: perubahan konsisten, scalable, minim efek berantai, dan lolos audit.
   - domain (`internal/modules/*/domain`)
   - ports (`internal/modules/*/ports`)
   - shared utilities yang netral (contoh `internal/shared/...`)
-  - Tidak boleh import `internal/http/*` atau vendor/cloud sdk.
+  - Tidak boleh import `internal/transport/http/*` atau vendor/cloud sdk.
 - Vendor/IO adapters hanya di `internal/platform/*` dan implement interfaces di `ports`.
 - Error type standar:
   - gunakan `internal/shared/apperr.AppError` untuk error yang keluar dari usecase
@@ -62,18 +62,18 @@ Tujuan: perubahan konsisten, scalable, minim efek berantai, dan lolos audit.
 
 ## Folder Contracts
 ### Router
-- Router induk: `internal/http/router/router.go` (entrypoint)
+- Router induk: `internal/transport/http/router/router.go` (entrypoint)
 - Subrouter:
-  - `internal/http/router/health`
-  - `internal/http/router/v1`
-  - `internal/http/router/v2`
-  - `internal/http/router/debug` (gated)
-  - `internal/http/router/audit`
+  - `internal/transport/http/router/health`
+  - `internal/transport/http/router/v1`
+  - `internal/transport/http/router/v2`
+  - `internal/transport/http/router/debug` (gated)
+  - `internal/transport/http/router/audit`
 
-Rule: jika menambah endpoint v1, harus masuk ke `internal/http/router/v1/*` (bukan di router induk).
+Rule: jika menambah endpoint v1, harus masuk ke `internal/transport/http/router/v1/*` (bukan di router induk).
 
 ### Presenter
-- `internal/http/presenter/error.go` adalah pusat sanitasi error response + redaction log.
+- `internal/transport/http/presenter/error.go` adalah pusat sanitasi error response + redaction log.
 - Presenter response dibagi:
   - `success.go`, `auth.go`, `billing.go`, `envelope.go`, `error.go`
 
@@ -111,12 +111,12 @@ Wajib menyertakan:
 
 ## Required Snapshot Before Starting Any Work
 Sebelum mengusulkan blueprint, AI harus meminta output:
-- `tree -L 6 internal/http`
+- `tree -L 6 internal/transport/http`
 - `tree -L 6 internal/modules/[TARGET_MODULE]`
-- `cat internal/http/router/router.go`
-- `cat internal/http/router/v1/router.go`
-- `cat internal/http/presenter/error.go`
-- `rg -n "^package " internal/http/router`
+- `cat internal/transport/http/router/router.go`
+- `cat internal/transport/http/router/v1/router.go`
+- `cat internal/transport/http/presenter/error.go`
+- `rg -n "^package " internal/transport/http/router`
 - (opsional) file terkait fitur: [EXTRA_SNAPSHOT_FILES]
 
 ---

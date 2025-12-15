@@ -5,8 +5,8 @@ Ini template prompt yang kamu kirim ke GPT setiap kali mau ngerjain fitur. Ada p
 KONTEKS REPO
 - Module: [MODULE_PATH]
 - Aturan repo: ikuti docs/AI_RULES.md (hard rules + boundaries + DoD).
-- Struktur router: internal/http/router/* (router induk + v1 modular).
-- Presenter: internal/http/presenter/* (success/auth/billing/error).
+- Struktur router: internal/transport/http/router/* (router induk + v1 modular).
+- Presenter: internal/transport/http/presenter/* (success/auth/billing/error).
 - Error response wajib JSON envelope via presenter.HTTPErrorHandler. JSONB hanya storage internal.
 
 TASK
@@ -15,12 +15,12 @@ TASK
 
 SEBELUM MULAI (WAJIB)
 1) Minta snapshot repo ini dulu (jangan asumsi):
-   - tree -L 6 internal/http
+   - tree -L 6 internal/transport/http
    - tree -L 6 internal/modules/[TARGET_MODULE]
-   - cat internal/http/router/router.go
-   - cat internal/http/router/v1/router.go
-   - cat internal/http/presenter/error.go
-   - rg -n "^package " internal/http/router
+   - cat internal/transport/http/router/router.go
+   - cat internal/transport/http/router/v1/router.go
+   - cat internal/transport/http/presenter/error.go
+   - rg -n "^package " internal/transport/http/router
    - [EXTRA SNAPSHOT FILES, kalau relevan]
 2) Tanyakan keputusan yang dibutuhkan (kalau belum jelas):
    - Target client: web / mobile / keduanya?
@@ -73,8 +73,8 @@ REPO HEADER (ringkas)
 - DoD: gofmt, go test ./..., go vet ./..., curl sanity.
 
 SNAPSHOT WAJIB (paste output):
-- tree -L 6 internal/http
+- tree -L 6 internal/transport/http
 - tree -L 6 internal/modules/[TARGET]
-- cat internal/http/router/v1/router.go
-- cat internal/http/presenter/error.go
-- rg -n "^package " internal/http/router
+- cat internal/transport/http/router/v1/router.go
+- cat internal/transport/http/presenter/error.go
+- rg -n "^package " internal/transport/http/router

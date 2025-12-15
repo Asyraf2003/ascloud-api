@@ -10,9 +10,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"example.com/your-api/internal/http/middleware"
-	"example.com/your-api/internal/http/router"
 	jwt "example.com/your-api/internal/platform/token/jwt"
+	"example.com/your-api/internal/transport/http/middleware"
+	"example.com/your-api/internal/transport/http/router"
 )
 
 func mustVerifier(t *testing.T) *jwt.Verifier {

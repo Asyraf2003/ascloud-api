@@ -2,8 +2,8 @@ Contoh Prompt Terisi (contoh: login Google)
 KONTEKS REPO
 - Module: example.com/your-api
 - Aturan repo: ikuti docs/AI_RULES.md.
-- Router: internal/http/router/* (router induk + v1 modular).
-- Presenter: internal/http/presenter/*.
+- Router: internal/transport/http/router/* (router induk + v1 modular).
+- Presenter: internal/transport/http/presenter/*.
 - Error response JSON envelope via presenter.HTTPErrorHandler. JSONB hanya storage internal.
 
 TASK
@@ -12,12 +12,12 @@ TASK
 
 SEBELUM MULAI (WAJIB)
 1) Minta snapshot repo:
-   - tree -L 6 internal/http
+   - tree -L 6 internal/transport/http
    - tree -L 6 internal/modules/auth
-   - cat internal/http/router/router.go
-   - cat internal/http/router/v1/router.go
-   - cat internal/http/presenter/error.go
-   - rg -n "^package " internal/http/router
+   - cat internal/transport/http/router/router.go
+   - cat internal/transport/http/router/v1/router.go
+   - cat internal/transport/http/presenter/error.go
+   - rg -n "^package " internal/transport/http/router
    - cat internal/platform/google/idtoken_verifier.go
    - cat internal/security/token/token.go
 

@@ -7,10 +7,10 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"example.com/your-api/internal/config"
-	"example.com/your-api/internal/http/presenter"
 	"example.com/your-api/internal/modules/auth/domain"
 	"example.com/your-api/internal/modules/auth/usecase"
 	"example.com/your-api/internal/shared/apperr"
+	"example.com/your-api/internal/transport/http/presenter"
 )
 
 type GoogleHandler struct {

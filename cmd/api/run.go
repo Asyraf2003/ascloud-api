@@ -12,10 +12,10 @@ import (
 
 	"example.com/your-api/internal/app/bootstrap"
 	"example.com/your-api/internal/config"
-	"example.com/your-api/internal/http/router"
-	"example.com/your-api/internal/http/server"
 	"example.com/your-api/internal/platform/datastore/postgres"
 	jwtp "example.com/your-api/internal/platform/token/jwt"
+	"example.com/your-api/internal/transport/http/router"
+	"example.com/your-api/internal/transport/http/server"
 )
 
 func run() {
