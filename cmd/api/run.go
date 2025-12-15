@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"example.com/your-api/internal/config"
+	"example.com/your-api/internal/modules/auth/wire"
 	"example.com/your-api/internal/platform/datastore/postgres"
-	"example.com/your-api/internal/platform/google"
 	jwtp "example.com/your-api/internal/platform/token/jwt"
 	"example.com/your-api/internal/transport/http/router"
 	"example.com/your-api/internal/transport/http/server"
@@ -53,7 +53,7 @@ func run() {
 		os.Exit(1)
 	}
 
-	if err := google.WireAuthGoogle(db, authCfg); err != nil {
+	if err := wire.WireAuthGoogle(db, authCfg); err != nil {
 		log.Error("wire auth google failed", "err", err)
 		os.Exit(1)
 	}
