@@ -1,0 +1,52 @@
+ini saya gtw maksudnya, perlu saya kirim isi filenya?
+
+-
+
+Edit internal/modules/auth/usecase/google_callback_support.go jadi, ini saya punya file aslinya, mau cek dlu? atau ganti atau sesuaikan atau timpa?
+
+-
+
+2) Patch GoogleStart validation (biar gak liar)
+
+Edit internal/modules/auth/usecase/google_start.go di awal:
+
+if in.Purpose == "" { in.Purpose = "login" }
+if in.Purpose != "login" && in.Purpose != "stepup" {
+	return GoogleStartOutput{}, apperr.New(domain.ErrBadRequest, http.StatusBadRequest, "Permintaan tidak valid.")
+}
+
+ini saya perlu kirim file nya untuk disesuaikan?
+
+-
+
+3) Patch GoogleCallback: enforce Allow + purpose stepup = aal2
+
+Di internal/modules/auth/usecase/google_callback.go, setelah accID resolved + linked:
+
+Tambah:
+
+perlu saya kirim file nya untuk dikoreksi atau sesuaikan atau timpa?
+
+-
+
+Buat internal/modules/auth/usecase/refresh.go dan logout.go, ini saya ada filenya, gimana? sesuaikan?
+
+-
+
+Buat internal/modules/auth/http/session_cookie.go, logout.go dan session_handler.go, ini saya udah ada filenya, timpa atau koreksi? atau saya kirim dlu?
+
+-
+
+E) Wiring bootstrap: set SessionHandler juga
+
+Kamu sudah punya WireAuthGoogle(db, cfg) di internal/app/bootstrap/auth_google.go.
+Di situ pasti ada bagian yang bikin flow + set handler. Tambahkan 2 baris ini setelah flow dibuat:
+
+authHTTP.SetGoogleHandler(authHTTP.NewGoogleHandler(flow, cfg))
+authHTTP.SetSessionHandler(authHTTP.NewSessionHandler(flow, cfg))
+
+ini saya kirim file nya untuk penyesuaian?
+
+-
+
+semua harus zero asumsi, dan best p[ractice dan scalable dan tidak beda penulisan kode dengan yg lainnya, misal di file ini pakai authccid eh file lain pakai auth ccie gitu, nahs aya g mau gitu, makanya klo butuh data minta aja
