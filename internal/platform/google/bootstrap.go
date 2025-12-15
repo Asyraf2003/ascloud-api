@@ -1,4 +1,4 @@
-package bootstrap
+package google
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"example.com/your-api/internal/modules/auth/ports"
 	authHTTP "example.com/your-api/internal/modules/auth/transport/http"
 	"example.com/your-api/internal/modules/auth/usecase"
-	"example.com/your-api/internal/platform/google"
 	memstate "example.com/your-api/internal/platform/state/memory"
 	jwt "example.com/your-api/internal/platform/token/jwt"
 )
@@ -26,7 +25,7 @@ func WireAuthGoogle(db *sql.DB, cfg config.AuthConfig) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	oidc, err := google.NewOIDC(ctx, google.OIDCConfig{
+	oidc, err := NewOIDC(ctx, OIDCConfig{
 		Issuer: cfg.Google.Issuer, ClientID: cfg.Google.ClientID, ClientSecret: cfg.Google.ClientSecret, RedirectURL: cfg.Google.RedirectURL,
 	})
 	if err != nil {
