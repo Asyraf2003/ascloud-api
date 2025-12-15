@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	authPkg "example.com/your-api/internal/platform/datastore/postgres/auth"
+	authPkg "example.com/your-api/internal/modules/auth/store/postgres"
 
 	"example.com/your-api/internal/config"
 	"example.com/your-api/internal/modules/auth/ports"
