@@ -1,0 +1,8 @@
+title = "your-api gitleaks config"
+
+[allowlist]
+description = "Allow local env files (never committed)"
+paths = [
+  '''\.env$''',
+  '''\.env\..*''',
+]

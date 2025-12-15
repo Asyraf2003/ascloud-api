@@ -1,0 +1,16 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# build/test artifacts
+*.out
+*.log
+/tmp/
+dist/
+bin/
+
+# editor/OS junk
+.DS_Store
+.idea/
+.vscode/
