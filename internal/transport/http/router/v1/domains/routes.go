@@ -1,4 +1,4 @@
-package domainmgmt
+package domains
 
 import "github.com/labstack/echo/v4"
 

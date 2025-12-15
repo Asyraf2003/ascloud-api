@@ -9,7 +9,7 @@ import (
 	accountPkg "example.com/your-api/internal/transport/http/router/v1/account"
 	authPkg "example.com/your-api/internal/transport/http/router/v1/auth"
 	billingPkg "example.com/your-api/internal/transport/http/router/v1/billing"
-	domainMgmtPkg "example.com/your-api/internal/transport/http/router/v1/domainmgmt"
+	domainMgmtPkg "example.com/your-api/internal/transport/http/router/v1/domains"
 	healthPkg "example.com/your-api/internal/transport/http/router/v1/health"
 	hostingPkg "example.com/your-api/internal/transport/http/router/v1/hosting"
 	mePkg "example.com/your-api/internal/transport/http/router/v1/me"
