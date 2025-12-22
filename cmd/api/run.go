@@ -15,6 +15,7 @@ import (
 	"example.com/your-api/internal/platform/datastore/postgres"
 	jwtp "example.com/your-api/internal/platform/token/jwt"
 	"example.com/your-api/internal/transport/http/router"
+	v1AuthRouter "example.com/your-api/internal/transport/http/router/v1/auth"
 	"example.com/your-api/internal/transport/http/server"
 )
 
@@ -45,6 +46,8 @@ func run() {
 		log.Error("invalid auth config", "err", err)
 		os.Exit(1)
 	}
+
+	v1AuthRouter.InitPolicy(authCfg)
 
 	// JWT verifier sesuai verifier.go kamu
 	jwtv, err := jwtp.NewHMACVerifier(authCfg.JWT.Issuer, authCfg.JWT.Audience, authCfg.JWT.Secret)

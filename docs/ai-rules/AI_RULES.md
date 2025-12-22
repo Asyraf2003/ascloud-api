@@ -6,11 +6,11 @@ Tujuan: perubahan konsisten, scalable, minim efek berantai, dan lolos audit.
 ---
 
 ## Repo Identity
-- Module path: [MODULE_PATH]  # contoh: example.com/your-api
+- Module path: example.com/your-api
 - Primary language: Go
 - Framework HTTP: Echo
-- Default API address: [HTTP_ADDR_DEFAULT]  # contoh: :8080
-- Timezone (opsional): [TIMEZONE]  # contoh: Asia/Jakarta
+- Default API address: :8080
+- Timezone (opsional): Asia/Jakarta
 
 ---
 
@@ -112,12 +112,12 @@ Wajib menyertakan:
 ## Required Snapshot Before Starting Any Work
 Sebelum mengusulkan blueprint, AI harus meminta output:
 - `tree -L 6 internal/transport/http`
-- `tree -L 6 internal/modules/[TARGET_MODULE]`
+- `tree -L 6 internal/modules/auth`
 - `cat internal/transport/http/router/router.go`
 - `cat internal/transport/http/router/v1/router.go`
 - `cat internal/transport/http/presenter/error.go`
 - `rg -n "^package " internal/transport/http/router`
-- (opsional) file terkait fitur: [EXTRA_SNAPSHOT_FILES]
+- (opsional) file terkait fitur: bagian middleware
 
 ---
 

@@ -7,8 +7,9 @@ import (
 )
 
 func Register(g *echo.Group) {
-	g.GET("/auth/google/start", authHTTP.GoogleStart)
-	g.GET("/auth/google/callback", authHTTP.GoogleCallback)
-	g.POST("/auth/refresh", authHTTP.Refresh)
-	g.POST("/auth/logout", authHTTP.Logout)
+	g.GET("/auth/google/start", authHTTP.GoogleStart, mwAuthStart()...)
+	g.GET("/auth/google/callback", authHTTP.GoogleCallback, mwAuthCallback()...)
+
+	g.POST("/auth/refresh", authHTTP.Refresh, mwAuthCookieStrict()...)
+	g.POST("/auth/logout", authHTTP.Logout, mwAuthCookieStrict()...)
 }

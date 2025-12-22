@@ -35,10 +35,32 @@ func (c AuthConfig) Validate() error {
 		return errors.New("weak AUTH_REFRESH_PEPPER: min length 16")
 	}
 
-	switch strings.ToLower(strings.TrimSpace(c.Security.CookieSameSite)) {
+	if c.JWT.AccessTTL <= 0 {
+		return errors.New("invalid AUTH_ACCESS_TTL_MIN: must be > 0")
+	}
+	if c.Session.RefreshTTL <= 0 {
+		return errors.New("invalid AUTH_REFRESH_TTL_HOURS: must be > 0")
+	}
+	if c.TTL.StateTTL <= 0 {
+		return errors.New("invalid AUTH_STATE_TTL_MIN: must be > 0")
+	}
+
+	ss := strings.ToLower(strings.TrimSpace(c.Security.CookieSameSite))
+	switch ss {
 	case "lax", "strict", "none":
 	default:
 		return errors.New("invalid COOKIE_SAMESITE: use lax|strict|none")
 	}
+	if ss == "none" && !c.Security.CookieSecure {
+		return errors.New("invalid cookie config: COOKIE_SAMESITE=none requires COOKIE_SECURE=true")
+	}
+
+	for _, o := range c.Security.AllowedOrigins {
+		u, err := url.Parse(o)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.Path != "" {
+			return fmt.Errorf("invalid AUTH_ALLOWED_ORIGINS entry: %q (must be scheme+host only)", o)
+		}
+	}
+
 	return nil
 }

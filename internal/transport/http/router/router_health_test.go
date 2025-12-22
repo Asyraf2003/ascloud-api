@@ -1,3 +1,6 @@
+//go:build component
+// +build component
+
 package router
 
 import (

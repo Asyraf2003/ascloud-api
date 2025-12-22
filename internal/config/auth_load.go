@@ -5,50 +5,6 @@ import (
 	"time"
 )
 
-type AuthConfig struct {
-	Google   GoogleAuthConfig
-	JWT      JWTConfig
-	Session  SessionConfig
-	Security CookieSecurityConfig
-	TTL      AuthTTLConfig
-	Hash     HashConfig
-}
-
-type GoogleAuthConfig struct {
-	ClientID     string
-	ClientSecret string
-	Issuer       string
-	RedirectURL  string
-}
-
-type JWTConfig struct {
-	Issuer    string
-	Audience  string
-	KID       string
-	Secret    string
-	AccessTTL time.Duration
-}
-
-type SessionConfig struct {
-	RefreshCookieName string
-	CSRFCookieName    string
-	RefreshTTL        time.Duration
-}
-
-type CookieSecurityConfig struct {
-	CookieDomain   string
-	CookieSecure   bool
-	CookieSameSite string // strict|lax|none
-}
-
-type AuthTTLConfig struct {
-	StateTTL time.Duration
-}
-
-type HashConfig struct {
-	RefreshPepper string
-}
-
 func LoadAuth() AuthConfig {
 	atoi := func(s string, def int) int {
 		n, err := strconv.Atoi(s)
@@ -65,7 +21,7 @@ func LoadAuth() AuthConfig {
 		return b
 	}
 
-	ttlMin := atoi(getenv("AUTH_ACCESS_TTL_MIN", "30"), 30)
+	ttlMin := atoi(getenv("AUTH_ACCESS_TTL_MIN", "15"), 15)
 	stateMin := atoi(getenv("AUTH_STATE_TTL_MIN", "5"), 5)
 	refreshH := atoi(getenv("AUTH_REFRESH_TTL_HOURS", "168"), 168)
 
@@ -92,6 +48,7 @@ func LoadAuth() AuthConfig {
 			CookieDomain:   getenv("COOKIE_DOMAIN", ""),
 			CookieSecure:   atob(getenv("COOKIE_SECURE", "false"), false),
 			CookieSameSite: getenv("COOKIE_SAMESITE", "lax"),
+			AllowedOrigins: getenvListCSV("AUTH_ALLOWED_ORIGINS", "http://localhost:8080"),
 		},
 		TTL:  AuthTTLConfig{StateTTL: time.Duration(stateMin) * time.Minute},
 		Hash: HashConfig{RefreshPepper: getenv("AUTH_REFRESH_PEPPER", "dev-pepper")},

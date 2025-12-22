@@ -1,0 +1,62 @@
+name: Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: "0 18 * * *" # daily 02:00 WITA-ish (UTC+8 -> 18:00 UTC)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d app"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Create .env for migrate/api targets
+        run: |
+          cat > .env <<'EOF'
+          DB_DSN=postgres://postgres:postgres@localhost:5432/app?sslmode=disable
+          DATABASE_URL=postgres://postgres:postgres@localhost:5432/app?sslmode=disable
+          EOF
+
+      - name: Migrate up
+        run: |
+          go run ./cmd/migrate up
+
+      - name: Run integration tests
+        env:
+          DB_DSN: postgres://postgres:postgres@localhost:5432/app?sslmode=disable
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app?sslmode=disable
+        run: make test-integration

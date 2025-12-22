@@ -3,7 +3,7 @@ Prompt Template (untuk tiap task)
 Ini template prompt yang kamu kirim ke GPT setiap kali mau ngerjain fitur. Ada placeholder yang kamu ganti.
 
 KONTEKS REPO
-- Module: [MODULE_PATH]
+- Module: zzzzzz
 - Aturan repo: ikuti docs/AI_RULES.md (hard rules + boundaries + DoD).
 - Struktur router: internal/transport/http/router/* (router induk + v1 modular).
 - Presenter: internal/transport/http/presenter/* (success/auth/billing/error).

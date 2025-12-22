@@ -25,9 +25,6 @@ func (h *SessionHandler) Refresh(c echo.Context) error {
 	if c.Request().Method == http.MethodOptions {
 		return c.NoContent(http.StatusNoContent)
 	}
-	if err := requireCSRF(c, h.cfg); err != nil {
-		return err
-	}
 
 	refresh := readCookie(c, h.cfg.Session.RefreshCookieName)
 	out, err := h.flow.Refresh(c.Request().Context(), usecase.RefreshInput{
@@ -58,11 +55,9 @@ func (h *SessionHandler) Logout(c echo.Context) error {
 	}
 	refresh := readCookie(c, h.cfg.Session.RefreshCookieName)
 	if refresh != "" {
-		if err := requireCSRF(c, h.cfg); err != nil {
-			return err
-		}
 		_ = h.flow.Logout(c.Request().Context(), usecase.LogoutInput{RefreshToken: refresh})
 	}
+
 	clearAuthCookies(c, h.cfg)
 	setNoStore(c)
 	return c.NoContent(http.StatusNoContent)
