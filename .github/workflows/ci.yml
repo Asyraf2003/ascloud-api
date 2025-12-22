@@ -32,8 +32,22 @@ jobs:
           go version
           go env
 
+      - name: Go mod tidy check
+        run: |
+          go mod tidy
+          git diff --exit-code
+
       - name: Check (fmt-check + unit/component + vet)
         run: make check
+
+      - name: Vulnerability scan (govulncheck)
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+      # Optional score booster
+      - name: Race test
+        if: github.ref == 'refs/heads/main'
+        run: go test -race ./... -count=1
 
       - name: Audit rules
         run: make audit

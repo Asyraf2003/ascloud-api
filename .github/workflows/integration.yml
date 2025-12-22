@@ -5,7 +5,7 @@ on:
   push:
     branches: [ "main" ]
   schedule:
-    - cron: "0 18 * * *" # daily 02:00 WITA-ish (UTC+8 -> 18:00 UTC)
+    - cron: "0 18 * * *" # daily ~02:00 WITA (GitHub cron = UTC)
 
 permissions:
   contents: read
@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    env:
+      DB_DSN: postgres://postgres:postgres@postgres:5432/app?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/app?sslmode=disable
+      ENV_FILE: .env
+
     services:
       postgres:
         image: postgres:16
@@ -26,8 +31,6 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
           POSTGRES_DB: app
-        ports:
-          - 5432:5432
         options: >-
           --health-cmd="pg_isready -U postgres -d app"
           --health-interval=5s
@@ -44,19 +47,15 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Create .env for migrate/api targets
+      - name: Create .env for make targets
         run: |
           cat > .env <<'EOF'
-          DB_DSN=postgres://postgres:postgres@localhost:5432/app?sslmode=disable
-          DATABASE_URL=postgres://postgres:postgres@localhost:5432/app?sslmode=disable
+          DB_DSN=postgres://postgres:postgres@postgres:5432/app?sslmode=disable
+          DATABASE_URL=postgres://postgres:postgres@postgres:5432/app?sslmode=disable
           EOF
 
       - name: Migrate up
-        run: |
-          go run ./cmd/migrate up
+        run: make migrate-up
 
       - name: Run integration tests
-        env:
-          DB_DSN: postgres://postgres:postgres@localhost:5432/app?sslmode=disable
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app?sslmode=disable
         run: make test-integration
