@@ -1,88 +1,84 @@
 # DESCRIPTION
 
-Dokumen ini menjelaskan:
-- Kenapa paket dokumen AI ini efektif (anti-halu + anti-efek-berantai)
-- Cara pakai yang benar
-- Bagian yang wajib disesuaikan tiap task
+Dokumen ini menjelaskan **kenapa** template AI di repo ini dibuat seperti itu, dan **bagian mana** yang wajib kamu sesuaikan tiap task.
+
+Target akhirnya sederhana:
+- AI tidak mengarang path/kontrak.
+- Perubahan minim efek berantai.
+- Hasilnya enak diaudit (bukan “percaya aja bro”).
 
 ---
 
-## Kenapa ini efektif
-1) **Memaksa snapshot**
-   AI tidak boleh ngarang path/kontrak yang sudah berubah. Snapshot membuat perubahan selalu grounded.
+## Kenapa template ini efektif
 
-2) **Ada boundary rules**
-   Mencegah “benerin A malah nyenggol B sampai C rusak” (efek berantai).
+### 1) Snapshot dulu = anti halu
+AI sering “yakin” pada struktur repo yang sebenarnya sudah berubah.
+Snapshot memaksa AI kerja dari fakta:
+- struktur folder
+- kontrak router/presenter
+- boundary rules yang berlaku saat ini
 
-3) **Ada Definition of Done (DoD)**
-   AI wajib kasih command dan output yang bisa kamu audit cepat: gofmt/test/vet + sanity curl.
+### 2) Decision list = beda pilihan, beda dunia
+Beberapa keputusan kelihatan kecil, tapi dampaknya besar:
+- cookie vs body untuk refresh token
+- web browser vs API-to-API (CSRF/CORS beda total)
+- expiry & rotation model
+- step-up / trust score
 
-4) **Keputusan eksplisit**
-   Hal seperti token delivery (cookie vs body), client type (browser vs api-to-api), expiry, step-up, itu beda dunia security-nya.
-   Kalau keputusan belum jelas, AI harus berhenti dan tanya.
+Kalau decision tidak eksplisit, hasil implementasi bisa “benar” tapi salah konteks.
+
+### 3) Blueprint dulu = cegah perbaikan berantai
+Tanpa blueprint, AI cenderung:
+- nambah file random,
+- ubah struktur seenaknya,
+- “fix” satu bug tapi ngerusak kontrak lain.
+
+Blueprint memaksa:
+- flow endpoint jelas
+- ownership data jelas
+- ports & dependency jelas
+- plan test jelas
+
+### 4) DoD jelas = audit gampang
+Kalau tidak ada DoD, ujungnya debat perasaan.
+Minimal DoD:
+- gofmt
+- go test
+- go vet
+- sanity curl (kalau HTTP)
+- make audit (kalau tersedia)
 
 ---
 
-## Cara pakai (urutan yang benar)
-1) Buka `AI_RULES.md` dan pastikan kontrak repo masih valid.
-2) Copy template dari `AI_PROMPT.md`.
-3) Isi TASK secara spesifik.
-4) Paste output snapshot yang diminta.
-5) Jawab decision list (kalau ada).
-6) Baru minta AI bikin blueprint, lalu eksekusi.
+## Bagian yang wajib kamu sesuaikan (tiap task)
 
----
+### `[MODULE_PATH]`
+Harus sama dengan `go.mod` (contoh: `example.com/your-api`).
 
-## Bagian yang WAJIB kamu sesuaikan tiap task
+### `[TARGET_MODULE]`
+Modul yang lagi dikerjakan (auth, hosting, domains, trust, dll).
 
-### 1) Module path
-Isi sesuai `go.mod`:
-- `example.com/your-api`
-
-### 2) Target module
+### `[EXTRA_SNAPSHOT_FILES]`
+Tambahkan file yang relevan dengan task.
 Contoh:
-- `auth`, `hosting`, `domains`, `billing` (kalau ada)
-
-### 3) Extra snapshot files
-Kalau task menyentuh area tertentu, tambahkan file snapshot yang relevan.
-Contoh:
-
-**auth**
-- `internal/platform/google/*`
-- `internal/platform/token/*`
-- `internal/modules/auth/*`
-- `internal/transport/http/middleware/*` (CSRF/Origin/JWT)
-
-**hosting**
-- `internal/platform/objectstore/*`
-- `internal/platform/edge/*`
-- `internal/platform/queue/*`
-- `internal/modules/hosting/*`
-
-**datastore**
-- `internal/platform/datastore/postgres/*`
-- migrations terkait
-
-### 4) Decision list
-Beda task, beda keputusan.
-Tapi selalu minimal punya:
-- target client (browser vs api-to-api)
-- token delivery
-- expiry
-- auth/trust assumptions
-- audit events minimal
+- auth: `internal/platform/google/*`, `internal/platform/token/*`, `internal/modules/auth/*`
+- hosting: `internal/platform/objectstore/*`, `internal/platform/edge/*`, `internal/modules/hosting/*`
+- queue/worker: `internal/platform/queue/*`, `cmd/worker/*`
 
 ---
 
-## Pitfalls yang sering bikin repo busuk
-- Snapshot list tidak di-update setelah refactor (akhirnya AI “halu”).
-- Hard rules ditulis tapi tidak ada enforcement (pastikan `make audit` tetap relevan).
-- Doc jadi terlalu panjang dan tidak operasional (hindari esai, fokus checklist + kontrak).
-- Menyimpan draft/ide liar di ADR (draft taruh di `docs/notes/`, ADR hanya keputusan final).
+## Kesalahan umum (biar gak mengulang dosa)
+
+- AI langsung nulis code tanpa baca router/presenter kontrak.
+- Menyebut “integration test” tapi tidak menyentuh dependency real.
+- Domain/usecase diam-diam import vendor/platform (melanggar boundaries).
+- Mengubah format response sendiri (bypass presenter).
+- Menambah debug endpoint tanpa gating `DEBUG_ROUTES=1`.
 
 ---
 
-## Kapan perlu update dokumen ini
-- Struktur repo berubah (path/kontrak/router/presenter berubah)
-- Policy security berubah (CSRF/CORS/session/jwt model berubah)
-- Audit/DoD berubah (command, tag test, sanity curl)
+## Checklist cepat sebelum mulai task
+- [ ] Snapshot ditempel lengkap (tree + kontrak inti).
+- [ ] Decisions penting sudah dijawab (client type, token model, expiry, dll).
+- [ ] Blueprint sudah ditulis sebelum eksekusi.
+- [ ] DoD sudah disepakati (commands + sanity).
