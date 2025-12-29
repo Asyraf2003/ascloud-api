@@ -40,5 +40,11 @@ audit-makefiles:
 		exit 1; \
 	fi
 
-audit: prereq check audit-lines audit-packages audit-makefiles
+.PHONY: audit-docs
+
+audit-docs:
+	bash scripts/docs_audit.sh
+
+audit: prereq check audit-lines audit-packages audit-makefiles audit-docs
 	@echo "OK: audit passed"
+
