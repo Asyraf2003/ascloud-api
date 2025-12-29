@@ -1,6 +1,6 @@
 # ADR 0001: Auth via Google OIDC (Login/Register) + Refresh Rotation + Step-up
 
-Tanggal: 2025-12-14
+Tanggal: 2025-12-14 WIB
 Status: Accepted
 
 ## Context

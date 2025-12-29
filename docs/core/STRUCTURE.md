@@ -106,6 +106,25 @@ Rule: platform tidak boleh bergantung pada HTTP layer.
 
 ---
 
+## Repo Audits (Quality Gates)
+
+Untuk menjaga kesehatan kode (*hygiene*) dan kepatuhan kontrak, repo ini menggunakan gate otomatis yang dijalankan secara berkala atau via CI:
+
+1.  **Boundary Audit (`scripts/audit_boundaries.sh`)**
+    * **Tujuan:** Memastikan aturan import antar layer (Domain, Ports, Usecase, Platform) tidak dilanggar.
+    * **FAIL jika:** Terjadi *circular dependency* atau layer bawah mengimpor layer atas (misal: Domain impor Platform).
+
+2.  **Content Audit (`scripts/content_audit.sh`)**
+    * **Tujuan:** Deteksi file "kosong secara makna" (*meaningless*), placeholder yang tertinggal, atau struktur minimalis tanpa isi.
+    * **FAIL jika:** * File `.go` hanya berisi deklarasi `package <name>` tanpa kode/logika setelah komentar dibersihkan.
+        * File `.md` hanya berisi heading tanpa deskripsi substansial atau mengandung kata kunci placeholder (TBD, TODO, dll).
+    * **Pengecualian:** Folder kosong wajib menggunakan `.gitkeep` atau `README.md` yang deskriptif, bukan file Go kosong.
+
+3.  **Standard Go Gates**
+    * `make audit`: Menjalankan gabungan `go vet`, `staticcheck`, dan unit testing.
+
+---
+
 ## Testing (Ringkas)
 Detail: lihat `docs/core/TESTING.md`
 - Unit: default (`go test ./...`)
