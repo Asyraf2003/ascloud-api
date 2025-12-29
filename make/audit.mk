@@ -45,6 +45,10 @@ audit-makefiles:
 audit-docs:
 	bash scripts/docs_audit.sh
 
-audit: prereq check audit-lines audit-packages audit-makefiles audit-docs
-	@echo "OK: audit passed"
+.PHONY: audit-testtags
 
+audit-testtags:
+	bash scripts/testtags_audit.sh
+
+audit: prereq check audit-lines audit-packages audit-makefiles audit-docs audit-testtags
+	@echo "OK: audit passed"
