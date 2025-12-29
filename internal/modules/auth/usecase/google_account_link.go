@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"errors"
 	"example.com/your-api/internal/modules/auth/domain"
 	"example.com/your-api/internal/modules/auth/ports"
 	"example.com/your-api/internal/shared/apperr"
@@ -22,6 +23,10 @@ func (u *GoogleFlow) resolveAccount(ctx context.Context, c ports.OIDCClaims) (st
 	}
 	id, err := u.accounts.Create(ctx, ports.AccountInput{Email: c.Email, Meta: map[string]any{"source": "google"}})
 	if err != nil {
+		if errors.Is(err, ports.ErrAccountEmailTaken) {
+			// Email sudah ada tapi identity belum ada => jangan auto-link (hindari takeover).
+			return "", apperr.New(domain.ErrForbidden, http.StatusConflict, "Akun dengan email ini sudah ada. Login dengan metode lama, lalu link Google dari dalam akun.")
+		}
 		return "", apperr.Wrap(err, domain.ErrInternal, http.StatusInternalServerError, "Terjadi kesalahan.")
 	}
 	return id.String(), nil

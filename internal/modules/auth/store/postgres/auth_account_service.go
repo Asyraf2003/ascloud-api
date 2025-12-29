@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"example.com/your-api/internal/modules/auth/ports"
 	"example.com/your-api/internal/platform/datastore/postgres" // Import platform
 	"github.com/google/uuid"
@@ -38,10 +40,16 @@ func (s *AuthAccountService) Create(ctx context.Context, in ports.AccountInput) 
 	// Point penting: executor sekarang berisi *sql.Tx (jika dalam transaksi)
 	// atau *sql.DB (jika transaksi tidak ada). Ini sangat AMAN.
 	err = executor.QueryRowContext(ctx,
-		`INSERT INTO accounts(email, meta) VALUES($1,$2) 
-         ON CONFLICT(email) DO UPDATE SET meta=EXCLUDED.meta RETURNING id`,
+		`INSERT INTO accounts(email, meta) VALUES($1,$2) RETURNING id`,
 		in.Email, b,
 	).Scan(&id)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return uuid.Nil, ports.ErrAccountEmailTaken
+		}
+		return uuid.Nil, err
+	}
 
-	return id, err
+	return id, nil
 }
