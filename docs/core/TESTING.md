@@ -90,7 +90,7 @@ Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyolok” ikut jala
 ## Template Build Tags
 
 ### Component test template
-~~~go
+---go
 //go:build component
 
 package yourpkg_test
@@ -98,10 +98,10 @@ package yourpkg_test
 import "testing"
 
 func TestSomethingComponent(t *testing.T) {}
-~~~
+---
 
 ### Integration test template
-~~~go
+---go
 //go:build integration
 
 package yourpkg_test
@@ -109,4 +109,14 @@ package yourpkg_test
 import "testing"
 
 func TestSomethingIntegration(t *testing.T) {}
-~~~
+---
+
+## Testing Transactions
+
+Usecase menerima dependency `ports.Transactor`:
+- Unit test menggunakan `ports.NoopTransactor` agar flow bisa dites tanpa DB.
+- Integration test (tag `integration`) digunakan untuk validasi transaksi nyata di Postgres.
+
+Aturan:
+- Repo/store yang butuh transaksi harus selalu query via `postgres.GetExecutor(ctx, db)`.
+- Test yang mengecek atomicity (rollback/commit) wajib integration test.

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"example.com/your-api/internal/modules/auth/ports"
+	"example.com/your-api/internal/platform/datastore/postgres"
 )
 
 type AuthIdentityRepo struct{ db *sql.DB }
@@ -16,10 +17,14 @@ type AuthIdentityRepo struct{ db *sql.DB }
 func NewAuthIdentityRepo(db *sql.DB) *AuthIdentityRepo { return &AuthIdentityRepo{db: db} }
 
 func (r *AuthIdentityRepo) FindAccountIDByIdentity(ctx context.Context, provider, subject string) (uuid.UUID, bool, error) {
+	exec := postgres.GetExecutor(ctx, r.db)
+
 	var id uuid.UUID
-	err := r.db.QueryRowContext(ctx,
-		`SELECT account_id FROM auth_identities WHERE provider=$1 AND subject=$2`, provider, subject,
+	err := exec.QueryRowContext(ctx,
+		`SELECT account_id FROM auth_identities WHERE provider=$1 AND subject=$2`,
+		provider, subject,
 	).Scan(&id)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return uuid.Nil, false, nil
@@ -38,7 +43,9 @@ func (r *AuthIdentityRepo) UpsertIdentity(ctx context.Context, accountID uuid.UU
 		return err
 	}
 
-	res, err := r.db.ExecContext(ctx, `
+	exec := postgres.GetExecutor(ctx, r.db)
+
+	res, err := exec.ExecContext(ctx, `
 INSERT INTO auth_identities(provider, subject, account_id, email, email_verified, meta)
 VALUES($1,$2,$3,$4,$5,$6)
 ON CONFLICT (provider, subject)
@@ -48,6 +55,7 @@ WHERE auth_identities.account_id = EXCLUDED.account_id
 	if err != nil {
 		return err
 	}
+
 	n, _ := res.RowsAffected()
 	if n == 0 {
 		return errors.New("identity already linked to different account")

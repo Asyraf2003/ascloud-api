@@ -86,7 +86,6 @@ Akses vendor via:
 
 ## System Topology (Mental Model)
 
-```text
 Client (web/dashboard)
    ↕ HTTPS
 API (Echo; control-plane) ──↔ Postgres (sessions, identities, accounts, audit, ...)
@@ -97,3 +96,32 @@ API (Echo; control-plane) ──↔ Postgres (sessions, identities, accounts, au
    │
 External IdP:
 - Google OIDC ↔ API
+
+---
+
+## Database Transactions (Context-based)
+
+Repo ini memakai pola transaksi berbasis `context.Context` supaya operasi multi-step bisa **atomic** tanpa “leak” SQL transaction ke layer usecase.
+
+### Komponen
+- `internal/platform/datastore/postgres/tx.go`
+  - `WithTx(ctx, *sql.Tx)` menyisipkan transaksi ke context.
+  - `GetExecutor(ctx, *sql.DB) SQLQueryer` mengembalikan executor:
+    - `*sql.Tx` jika ada transaksi di context
+    - `*sql.DB` jika tidak ada transaksi
+  - `RunInTx(ctx, db, fn)` menjalankan `fn` dalam transaksi (commit/rollback).
+- `internal/modules/auth/ports/transactor.go`
+  - `ports.Transactor` = kontrak transaksi untuk usecase.
+  - `ports.NoopTransactor` = implementasi untuk unit test (tanpa DB).
+- Implementasi Postgres (platform)
+  - `postgres.NewTransactor(db)` menghasilkan Transactor yang menjalankan `RunInTx`.
+
+### Aturan Pakai
+- **Usecase** yang melakukan beberapa operasi write harus dibungkus transaksi:
+  - contoh: `GoogleCallback`: create account + link identity harus 1 transaksi.
+- **Repository/Store** wajib memakai `GetExecutor(ctx, db)` untuk semua query/exec, agar otomatis ikut transaksi jika ada.
+
+### Kenapa begini?
+- Menjamin **Atomicity (ACID)**: tidak ada data “setengah jadi”.
+- Layering tetap rapi: usecase mengontrol “unit of work”, repo tetap fokus query.
+- Mudah ganti implementasi DB di masa depan (selama kontrak executor terjaga).
