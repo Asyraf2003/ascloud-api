@@ -1,6 +1,6 @@
 # ADR 0003: Domain boleh import internal/shared (pure)
 
-Tanggal: 2025-12-29 (WITA)  
+Tanggal: 2025-12-29
 Status: Accepted
 
 ## Context (Keadaan awal)

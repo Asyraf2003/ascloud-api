@@ -1,6 +1,6 @@
 # ADR 0002: Scope API + Worker, web sebagai client
 
-Tanggal: 29 December 2025 9:42 WITA
+Tanggal: 2025-12-29 09:42 WITA
 Status: Accepted
 
 ## Context (Keadaan awal)
