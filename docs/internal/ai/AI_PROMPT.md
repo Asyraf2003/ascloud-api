@@ -1,80 +1,79 @@
-Prompt Template (untuk tiap task)
+# AI_PROMPT
 
-Ini template prompt yang kamu kirim ke GPT setiap kali mau ngerjain fitur. Ada placeholder yang kamu ganti.
+Template prompt untuk meminta AI mengerjakan task di repo ini.
+Tujuan: AI tidak mengarang, tidak bikin efek berantai, dan hasilnya bisa kamu audit cepat.
 
-KONTEKS REPO
-- Module: zzzzzz
-- Aturan repo: ikuti docs/AI_RULES.md (hard rules + boundaries + DoD).
-- Struktur router: internal/transport/http/router/* (router induk + v1 modular).
-- Presenter: internal/transport/http/presenter/* (success/auth/billing/error).
-- Error response wajib JSON envelope via presenter.HTTPErrorHandler. JSONB hanya storage internal.
+> Aturan utama ada di `docs/internal/ai/AI_RULES.md`. Kalau ada konflik, AI_RULES menang.
 
-TASK
+---
+
+## 1) Prompt Template (copy-paste)
+
+### REPO CONTEXT
+- Module: `example.com/your-api`
+- Ikuti `docs/internal/ai/AI_RULES.md` (hard rules + boundaries + DoD).
+- Router core: `internal/transport/http/router/*` (router induk + v1 modular).
+- Presenter: `internal/transport/http/presenter/*`.
+- Error response: JSON envelope via `presenter.HTTPErrorHandler` (tanpa secrets).
+- Debug routes gated: `DEBUG_ROUTES=1`.
+- 1 folder = 1 package. Target file Go ≤ 100 baris.
+
+### TASK
 - [TULIS TASK DI SINI]
-  Contoh: Buat fitur login/register user via Google (tanpa metode lain), tapi struktur siap untuk provider lain di masa depan.
+  (jelaskan tujuan, scope, dan constraint penting)
 
-SEBELUM MULAI (WAJIB)
-1) Minta snapshot repo ini dulu (jangan asumsi):
-   - tree -L 6 internal/transport/http
-   - tree -L 6 internal/modules/[TARGET_MODULE]
-   - cat internal/transport/http/router/router.go
-   - cat internal/transport/http/router/v1/router.go
-   - cat internal/transport/http/presenter/error.go
-   - rg -n "^package " internal/transport/http/router
-   - [EXTRA SNAPSHOT FILES, kalau relevan]
-2) Tanyakan keputusan yang dibutuhkan (kalau belum jelas):
-   - Target client: web / mobile / keduanya?
-   - Token delivery: refresh via HttpOnly cookie atau via response body?
-   - Expiry access token & refresh token?
-   - Apakah butuh “trust score” / step-up auth?
-   - Audit events apa saja yang wajib dicatat?
+### REQUIRED SNAPSHOT (WAJIB, jangan asumsi)
+Tempel output command ini sebelum AI bikin blueprint:
+- `tree -L 6 internal/transport/http`
+- `tree -L 6 internal/modules/[TARGET_MODULE]`
+- `cat internal/transport/http/router/router.go`
+- `cat internal/transport/http/router/v1/router.go`
+- `cat internal/transport/http/presenter/error.go`
+- `rg -n "^package " internal/transport/http/router`
+- [EXTRA SNAPSHOT FILES] (opsional, bila task menyentuh area spesifik)
 
-WORKFLOW
-- Setelah snapshot + jawaban keputusan terkumpul:
-  1) Ringkas requirement final (bullet list).
-  2) Kritik pilihan yang berbahaya dan tawarkan alternatif best practice.
-  3) Baru buat blueprint (struktur folder + kontrak ports + flow endpoint).
-  4) Minta saya audit blueprint.
-  5) Setelah saya setuju, eksekusi implementasi.
+### DECISIONS (WAJIB bila belum jelas)
+Jawab poin yang relevan:
+- Target client: web browser / API-to-API / keduanya?
+- Token delivery: refresh via HttpOnly cookie atau via response body?
+- Expiry access token & refresh token?
+- Apakah butuh step-up (AAL2) / trust score?
+- Audit events minimal apa saja yang wajib dicatat?
+- Dependency real apa yang boleh dipakai untuk integration test?
 
-DELIVERABLES (SAAT EKSEKUSI)
+### WORKFLOW (urutan kerja AI)
+Setelah snapshot + keputusan lengkap:
+1) Ringkas requirement final (bullet list).
+2) Kritik risiko dan tawarkan alternatif best practice (kalau ada).
+3) Buat blueprint (flow + boundaries + file list).
+4) Setelah blueprint jelas, lanjut implementasi (minimal perubahan, tidak menjalar).
+5) Sediakan DoD: gofmt/test/vet + sanity curl + expected output.
+
+### DELIVERABLES (saat implementasi)
 - Daftar file baru/berubah.
 - Isi final tiap file (bukan potongan).
-- Command terminal untuk test + expected output.
+- Command:
+  - `gofmt -w .`
+  - `go test ./... -count=1`
+  - `go vet ./...`
 - Curl sanity tests + expected response.
-- Jika ada bug, perbaiki hanya file terkait (minim efek berantai).
-- Tidak boleh ada file >100 baris (split sesuai tanggung jawab).
+- Jika ada bug, perbaiki hanya di file terkait (minim efek berantai).
 
-Bagian yang kamu ganti tiap task
+---
 
-[TULIS TASK DI SINI]
-
-[TARGET_MODULE] (misal auth, hosting)
-
-[EXTRA SNAPSHOT FILES] (misal internal/platform/google/idtoken_verifier.go)
-
-
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-<!-- header prompt untuk chat terbaru -->
-
-Header chat versi ringkas yang cukup “mengunci”
-
-Ini yang lu paste di awal chat baru (singkat tapi mematikan):
-
+## 2) Header Ringkas (untuk chat baru, copy-paste)
 REPO HEADER (ringkas)
-- Module: [MODULE_PATH]
-- Ikuti docs/AI_RULES.md (hard rules).
+- Module: `example.com/your-api`
+- Ikuti `docs/internal/ai/AI_RULES.md` (hard rules).
 - Kontrak stabil: router.Register, v1.Register, presenter.HTTPErrorHandler.
-- Error response: JSON envelope via HTTPErrorHandler (no secrets).
-- JSONB hanya storage/meta internal, tidak boleh mentah ke client.
-- Debug routes wajib gated DEBUG_ROUTES=1.
-- 1 folder = 1 package. File <=100 baris (split by responsibility).
-- DoD: gofmt, go test ./..., go vet ./..., curl sanity.
+- Error response: JSON envelope (no secrets).
+- Debug routes gated: `DEBUG_ROUTES=1`.
+- 1 folder = 1 package. Target file Go ≤ 100 baris.
+- DoD: gofmt + go test + go vet + sanity curl.
 
-SNAPSHOT WAJIB (paste output):
-- tree -L 6 internal/transport/http
-- tree -L 6 internal/modules/[TARGET]
-- cat internal/transport/http/router/v1/router.go
-- cat internal/transport/http/presenter/error.go
-- rg -n "^package " internal/transport/http/router
+SNAPSHOT WAJIB (tempel output):
+- `tree -L 6 internal/transport/http`
+- `tree -L 6 internal/modules/[TARGET]`
+- `cat internal/transport/http/router/v1/router.go`
+- `cat internal/transport/http/presenter/error.go`
+- `rg -n "^package " internal/transport/http/router`
