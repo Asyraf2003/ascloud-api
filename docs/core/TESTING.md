@@ -1,10 +1,10 @@
 # Testing
 
 Dokumen ini menjelaskan kategori test di repo ini, aturan build tags, dan cara menjalankannya.
-Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyelip” jalan di pipeline yang salah.
+Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyolok” ikut jalan di pipeline yang salah.
 
 ## Prinsip
-- Default test harus aman dijalankan kapanpun (lokal/CI) tanpa butuh service eksternal.
+- Default test harus aman dijalankan kapan pun (lokal/CI) tanpa butuh service eksternal.
 - Test yang butuh dependency real (DB/network) wajib dipisahkan dengan build tag.
 - Jangan menyebut sesuatu “integration” kalau tidak benar-benar menyentuh dependency real.
 
@@ -12,7 +12,7 @@ Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyelip” jalan di 
 
 ## Kategori Test
 
-### 1 Unit Tests (default)
+### 1) Unit Tests (default)
 **Definisi**
 - Deterministic.
 - Tidak ada network, tidak ada DB real, tidak butuh port listen.
@@ -30,7 +30,7 @@ Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyelip” jalan di 
 
 ---
 
-### 2 Component Tests (HTTP in-memory)
+### 2) Component Tests (HTTP in-memory)
 **Definisi**
 - Menguji HTTP layer (router/middleware/handler) memakai `httptest` + Echo in-memory.
 - Tidak menyentuh DB real dan tidak listen port.
