@@ -1,144 +1,145 @@
 # AI_RULES
 
-Dokumen ini adalah aturan kerja saat AI membantu perubahan di repo ini.
-Tujuan: perubahan konsisten, minim efek berantai, gampang diaudit, dan aman untuk security.
+Aturan kerja saat AI membantu perubahan di repo ini.
 
-Jika ada konflik antara “preferensi gaya” vs aturan di sini: **aturan di sini menang**.
+Tujuan:
+- Perubahan konsisten, scalable, minim efek berantai.
+- Boundary jelas (hexagonal/modular).
+- Output bisa diaudit (DoD jelas).
+- AI tidak ngarang (wajib snapshot).
+
+Jika ada konflik dokumen, file ini menang.
 
 ---
 
-## Repo Identity (konstanta)
+## Repo Identity
 - Module path: `example.com/your-api`
-- Language: Go
+- Primary language: Go
 - HTTP framework: Echo
-- Default address: `:8080`
-- Timezone: Asia/Makassar (WITA)
+- Default HTTP addr: `:8080`
+- Timezone: WITA (`Asia/Makassar`)
 
 ---
 
 ## Non-negotiables (Hard Rules)
 
-### 1) Public contracts tidak boleh diubah
-Dilarang mengubah signature publik ini:
+### 1) Protected Public Contracts (jangan diubah)
 - `internal/transport/http/router.Register(*echo.Echo)`
-- `internal/transport/http/router/v1.Register(*echo.Echo)` (atau signature yang setara sesuai implementasi repo)
+- `internal/transport/http/router/v1.Register(*echo.Echo)`
 - `internal/transport/http/presenter.HTTPErrorHandler(error, echo.Context)`
 
-Jika memang butuh perubahan kontrak:
-- buat ADR dulu,
-- update dokumen,
-- baru ubah kode (dan siap migrasi dampaknya).
+### 2) Package & file hygiene
+- 1 folder = 1 package (jangan campur package dalam satu folder).
+- File tidak boleh > 100 baris.
+  - Split by responsibility (router per area, presenter per concern, usecase per flow).
+  - Jika ada alasan kuat >100 baris, tulis alasan singkat dengan `#TODO: justify`.
 
-### 2) 1 folder = 1 package
-Tidak boleh ada lebih dari satu `package` dalam satu folder (non-test).
+### 3) Debug endpoints
+- Dilarang menambah endpoint debug kecuali diminta.
+- Debug routes wajib gated: `DEBUG_ROUTES=1`.
 
-### 3) File size limit
-- Target: file Go ≤ 100 baris.
-- Kalau ada file > 100 baris:
-  - wajib split berdasar tanggung jawab, atau
-  - tulis alasan kuat dengan komentar `// TODO: justify >100 lines` dan rencana split.
-
-### 4) Debug endpoints wajib gated
-- Jangan menambah endpoint debug kecuali diminta.
-- Debug routes **wajib** gated: `DEBUG_ROUTES=1`.
-
-### 5) Error response wajib lewat presenter
-- Semua error ke client wajib JSON envelope via `presenter.HTTPErrorHandler`.
-- Dilarang mengirim:
+### 4) Error response policy (ke user)
+- Semua error response untuk user wajib JSON envelope via `presenter.HTTPErrorHandler`.
+- Dilarang kirim:
   - stacktrace
-  - SQL/vendor error mentah
+  - vendor error mentah
+  - SQL error mentah
   - token/cookie/secret
-  - payload sensitif mentah
+- Semua logging wajib redact: Authorization, Cookie, ApiKey, token apapun.
 
-### 6) Secrets & logging policy
-- Tidak ada secrets di repo.
-- Jangan log Authorization/Cookie/ApiKey/token:
-  - wajib redact/mask sebelum log.
-- Log idealnya terstruktur + include `request_id`.
+### 5) JSONB policy
+- JSONB hanya untuk storage/meta internal (audit/flexible fields).
+- JSONB/meta tidak pernah dikirim mentah ke client.
+- Audit meta wajib allowlist/redact.
 
 ---
 
 ## Architecture Boundaries (Anti efek berantai)
 
-> Enforcement utama: `scripts/audit_boundaries.sh` + `make audit`.
-
 ### Domain (`internal/modules/*/domain`)
-Boleh import:
-- standard library
-- `internal/shared/*` yang **pure** (sesuai ADR 0003)
-
-Dilarang import:
-- `internal/platform/*`
-- `internal/transport/http/*`
-- module lain (`internal/modules/*` selain dirinya)
-- third-party packages
+- Fokus: invariants, entity/value, semantic errors.
+- Boleh import:
+  - standard library
+  - `internal/shared/*` yang pure (lihat ADR 0003)
+- Dilarang import:
+  - `internal/platform/*`
+  - `internal/transport/http/*`
+  - module lain (`internal/modules/*`)
+  - third-party packages
 
 ### Ports (`internal/modules/*/ports`)
-Berisi interface dependency.
-Boleh import:
-- stdlib
-- domain (modul sendiri)
-- `internal/shared/*` (pure)
-
-Catatan:
-- third-party types boleh kalau benar-benar perlu dan kecil (default: hindari).
+- Berisi interface dependency.
+- Boleh import:
+  - stdlib
+  - domain (modul sendiri)
+  - `internal/shared/*` (pure)
+- Third-party hanya kalau benar-benar perlu dan disetujui (default: minimalkan).
 
 ### Usecase (`internal/modules/*/usecase`)
-Orchestrator flow: validasi ringan, call ports, bentuk output, return error standar.
-Boleh import:
-- domain + ports + `internal/shared/*` (pure)
+- Orchestrator flow: validasi ringan, call ports, bentuk output, return error terstandar.
+- Boleh import: domain + ports + `internal/shared/*` (pure).
+- Dilarang import:
+  - `internal/transport/http/*`
+  - `internal/platform/*`
+  - vendor/cloud sdk
 
-Dilarang import:
-- `internal/transport/http/*`
-- `internal/platform/*`
-
-### Module HTTP Transport (`internal/modules/*/transport/http`)
-Tugas:
-- parse request
-- validasi ringan
-- panggil usecase
-- return via presenter
-
-Dilarang:
-- import `internal/platform/*` (akses IO harus via usecase → ports)
+### Module HTTP transport (`internal/modules/*/transport/http`)
+- Tugas: mapping request/response + validasi ringan + panggil usecase.
+- Dilarang import `internal/platform/*`.
+- Response wajib lewat presenter/envelope (jangan bikin format sendiri).
 
 ### Core HTTP (`internal/transport/http/...`)
-Router/middleware/presenter lintas modul.
-Dilarang:
-- import `internal/platform/*`
+- Router/middleware/presenter lintas modul.
+- Dilarang import `internal/platform/*`.
 
 ### Platform (`internal/platform/...`)
-Implementasi nyata untuk ports (DB, queue, objectstore, edge, token, dll).
-Dilarang import:
-- `internal/transport/http/*`
-- `internal/modules/*/transport/http/*`
-- `internal/app/*` (bootstrap/wiring)
+- Implementasi nyata (DB, queue, objectstore, edge, token, provider).
+- Dilarang import:
+  - `internal/transport/http/*`
+  - `internal/modules/*/transport/http/*`
+  - `internal/app/*` (bootstrap/wiring)
 
-Prefer:
-- platform expose constructor + implement interface ports.
+Enforcement:
+- `scripts/audit_boundaries.sh`
+- `make audit`
 
 ---
 
-## Security baseline (minimal)
-Jika menyentuh auth/session:
-- refresh token **tidak** disimpan plain (store hash)
-- rotation + reuse detection + revoke
-- sesi/identity harus scoped tenant/account (anti IDOR)
+## Folder Contracts
 
-Rate limit:
-- boleh TBD, tapi jangan membuat endpoint sensitif tanpa rencana minimal (misal: per-IP + per-account).
+### Router
+- Root: `internal/transport/http/router/router.go`
+- v1: `internal/transport/http/router/v1/*`
+Rule:
+- Endpoint v1 harus didaftarkan di `internal/transport/http/router/v1/<area>/routes.go`
+
+### Presenter
+- Pusat sanitasi error: `internal/transport/http/presenter/error.go`
+Rule:
+- Handler tidak boleh bikin response format sendiri di luar presenter.
+
+---
+
+## Security Baseline (minimum)
+- Tidak ada secrets di repo.
+- Refresh token:
+  - tidak disimpan plain (store hash)
+  - rotation anti-reuse
+  - revoke support
+- Rate limiting plan: `TBD` (harus ditetapkan sebelum public launch)
 
 ---
 
 ## Definition of Done (setiap task/PR)
-Wajib ada:
+Wajib menyertakan:
 1) Daftar file baru/berubah.
-2) Isi final tiap file (bukan potongan).
-3) Command:
+2) Isi final tiap file (full file, bukan potongan).
+3) Commands:
    - `gofmt -w .`
    - `go test ./... -count=1`
    - `go vet ./...`
-4) Sanity check (minimal):
+   - `make audit` (kalau tersedia)
+4) Sanity (kalau HTTP):
    - `GET /health` → 200 JSON
    - `GET /v1/health` → 200 JSON
    - `GET /ga-ada` → 404 JSON error envelope
@@ -146,12 +147,18 @@ Wajib ada:
 
 ---
 
-## Required Snapshot (sebelum AI mulai kerja)
-AI wajib minta output ini dulu, jangan asumsi:
+## Required Snapshot (sebelum blueprint)
+AI wajib minta dan user wajib paste output:
 - `tree -L 6 internal/transport/http`
-- `tree -L 6 internal/modules/<TARGET>`
+- `tree -L 6 internal/modules/<target>`
 - `cat internal/transport/http/router/router.go`
 - `cat internal/transport/http/router/v1/router.go`
 - `cat internal/transport/http/presenter/error.go`
 - `rg -n "^package " internal/transport/http/router`
-- tambahan file relevan bila task menyentuh area spesifik (middleware/platform/schema)
+- (extra) file terkait fitur bila task menyentuh area spesifik
+
+---
+
+## Update Policy (biar tidak membusuk)
+- Kontrak/boundary berubah → update file ini + buat ADR bila relevan.
+- Struktur/path berubah → update snapshot list (jangan ada path ngaco).
