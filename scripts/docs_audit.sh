@@ -52,7 +52,8 @@ done
 
 echo
 echo "== docs_audit: markdown link existence (relative links) =="
-python3 - <<'PY'
+
+python3 - <<'PY' || fail=1
 import re, pathlib, sys
 
 root = pathlib.Path("docs")
@@ -64,9 +65,7 @@ for md in root.rglob("*.md"):
     text = md.read_text(encoding="utf-8", errors="ignore")
     for m in link_re.finditer(text):
         target = m.group(1)
-        # strip anchors
-        target = target.split("#", 1)[0]
-        # ignore empty
+        target = target.split("#", 1)[0]  # strip anchors
         if not target:
             continue
         p = (md.parent / target).resolve()
@@ -80,11 +79,4 @@ if bad:
     sys.exit(2)
 
 print("OK: no broken relative links")
-PY || fail=1
-
-echo
-if [[ "$fail" -ne 0 ]]; then
-  echo "docs_audit: FAILED" >&2
-  exit 1
-fi
-echo "docs_audit: OK"
+PY
