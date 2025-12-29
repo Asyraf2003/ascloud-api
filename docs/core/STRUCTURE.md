@@ -3,7 +3,7 @@
 Dokumen ini adalah pegangan struktur repo dan kontrak antar layer.
 Tujuan: gampang dibaca, gampang diaudit, minim efek berantai saat perubahan.
 
-> Hard rules lebih detail ada di `docs/internal/ai/AI_RULES.md`.
+> Hard rules paling detail ada di `docs/internal/ai/AI_RULES.md`.
 > Dokumen ini ringkas dan fokus pada “peta + kontrak”.
 
 ---
@@ -52,7 +52,7 @@ Rule: platform tidak boleh bergantung pada HTTP layer.
 
 ---
 
-## Contracts Antar Layer (Wajib)
+## Contracts Antar Layer
 
 ### Domain (`internal/modules/*/domain`)
 - Fokus: aturan bisnis inti (invariants), value/entity, semantic errors.
@@ -90,7 +90,7 @@ Rule: platform tidak boleh bergantung pada HTTP layer.
 
 ### Platform (`internal/platform/...`)
 - Implementasi nyata untuk ports (DB, queue, objectstore, edge, token, dll).
-- Dilarang: import:
+- Dilarang import:
   - `internal/transport/http/*`
   - module transport (`internal/modules/*/transport/http/*`)
   - `internal/app/*` (bootstrap/wiring)
