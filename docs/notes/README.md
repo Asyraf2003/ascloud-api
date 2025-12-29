@@ -1,40 +1,31 @@
 # Notes
 
-Folder ini untuk catatan sementara: draft, ide, log debugging, atau potongan diskusi yang belum layak jadi ADR / Core docs.
+Folder ini isinya catatan sementara: ide, draft, investigasi, atau brainstorming.
+Bukan kontrak arsitektur, bukan keputusan final.
 
-> Rule: kalau sudah jadi keputusan arsitektur, pindahkan ke `docs/adr/`.
-> Kalau sudah jadi “aturan main repo”, pindahkan ke `docs/core/` atau `docs/internal/ai/`.
-
----
-
-## Kapan pakai Notes
-- Draft keputusan (belum final).
-- Hasil investigasi/debugging.
-- Checklist kerja / TODO sementara.
-- Catatan refactor yang belum dieksekusi.
-
-## Kapan harus keluar dari Notes
-- Keputusan final yang mempengaruhi arsitektur/perilaku sistem → `docs/adr/`
-- Dokumen permanen yang jadi pedoman repo → `docs/core/`
-- Aturan kerja AI / template → `docs/internal/ai/`
+Kalau sesuatu sudah “resmi” dan harus jadi pegangan tim/masa depan:
+- Keputusan besar → pindahkan ke `docs/adr/`
+- Kontrak/peta sistem → pindahkan ke `docs/core/`
+- Aturan kerja AI → pindahkan ke `docs/internal/ai/`
 
 ---
 
-## Format penamaan file
-Gunakan format:
-`YYYY-MM-DD-judul-singkat.md`
+## Aturan Nama File
+Format:
+- `YYYY-MM-DD-judul-singkat.md`
 
 Contoh:
 - `2025-12-29-strukturnulis.md`
-- `2025-12-30-auth-refresh-debug.md`
+- `2025-12-30-debug-refresh-rotation.md`
 
 ---
 
-## Template isi notes (minimal)
-Setiap notes idealnya punya:
+## Template Catatan (wajib dipakai)
+Minimal ada:
+- Context: lagi ngerjain apa, kondisi awal
+- Problem: apa yang bikin macet/risiko
+- Notes: temuan, opsi, link internal (file/commit/ADR terkait)
+- Next Actions: langkah konkret (cek file apa / ubah apa / test apa)
 
-- **Context**: keadaan awal
-- **Problem**: apa yang rusak / bingung
-- **Findings**: temuan penting (fakta)
-- **Next actions**: langkah lanjut
-- **Status**: draft / done / migrated-to-ADR / obsolete
+Kalau catatan sudah selesai dan tidak relevan:
+- boleh dipindah ke `archive/` atau dihapus (kalau benar-benar noise).
