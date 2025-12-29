@@ -40,15 +40,16 @@ audit-makefiles:
 		exit 1; \
 	fi
 
-.PHONY: audit-docs
+.PHONY: audit-docs audit-testtags audit-content
 
 audit-docs:
 	bash scripts/docs_audit.sh
 
-.PHONY: audit-testtags
-
 audit-testtags:
 	bash scripts/testtags_audit.sh
 
-audit: prereq check audit-lines audit-packages audit-makefiles audit-docs audit-testtags
+audit-content:
+	bash scripts/content_audit.sh
+
+audit: prereq check audit-lines audit-packages audit-makefiles audit-docs audit-testtags audit-content
 	@echo "OK: audit passed"
