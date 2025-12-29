@@ -1,21 +1,16 @@
 # AI_PROMPT
 
 Template prompt untuk tiap task saat minta AI bantu kerja di repo ini.
-
-Tujuan:
-- AI kerja dari fakta repo (snapshot), bukan ngarang.
-- Keputusan produk jelas dulu.
-- Blueprint rapi dulu sebelum eksekusi.
-- Output siap audit (DoD jelas, minim efek berantai).
+Tujuan: AI kerja dari fakta repo (snapshot), keputusan produk jelas, lalu blueprint rapi sebelum eksekusi.
 
 ---
 
 ## Template Prompt (copy-paste)
 
 ### REPO CONTEXT
-- Module: `[MODULE_PATH]`
+- Module: [MODULE_PATH]
 - Ikuti `docs/internal/ai/AI_RULES.md` (hard rules + boundaries + DoD).
-- Router: `internal/transport/http/router/*` (root + v1 modular).
+- Router: `internal/transport/http/router/*` (router induk + v1 modular).
 - Presenter: `internal/transport/http/presenter/*`.
 - Error response: JSON envelope via `presenter.HTTPErrorHandler` (no secrets).
 - Debug routes wajib gated: `DEBUG_ROUTES=1`.
@@ -29,19 +24,17 @@ Tujuan:
 1) Struktur:
 - `tree -L 6 internal/transport/http`
 - `tree -L 6 internal/modules/[TARGET_MODULE]`
-
 2) Kontrak inti:
 - `cat internal/transport/http/router/router.go`
 - `cat internal/transport/http/router/v1/router.go`
 - `cat internal/transport/http/presenter/error.go`
 - `rg -n "^package " internal/transport/http/router`
-
 3) Extra snapshot (kalau relevan):
 - [EXTRA_SNAPSHOT_FILES]
 
 ### DECISIONS (jawab kalau belum jelas)
 - Target client: web browser / API-to-API / keduanya?
-- Token model: JWT access + refresh rotation atau opaque session?
+- Token model: JWT access + refresh rotation? atau session opaque?
 - Token delivery: refresh via HttpOnly cookie atau via response body?
 - Expiry: access (mis. 15m/30m), refresh (mis. 14d/30d)?
 - Apakah butuh trust score / step-up (AAL2)?
@@ -53,31 +46,31 @@ Tujuan:
 3) Buat blueprint:
    - flow endpoint
    - kontrak ports
-   - file list & ownership (siapa “pemilik data”)
-   - test plan (unit/component/integration bila relevan)
-4) Baru eksekusi implementasi setelah blueprint disetujui.
+   - file list & ownership
+4) Baru eksekusi implementasi setelah blueprint “oke”.
 
 ### DELIVERABLES (saat eksekusi)
 - Daftar file baru/berubah.
-- Isi final tiap file (full file, bukan potongan).
-- Commands:
+- Isi final tiap file (bukan potongan).
+- Command:
   - `gofmt -w .`
   - `go test ./... -count=1`
   - `go vet ./...`
-  - `make audit` (kalau tersedia)
-- Sanity (kalau HTTP) + expected response.
+  - `make audit` (kalau tersedia di repo)
+- Curl sanity (kalau HTTP) + expected response.
+- Jika ada bug, fix hanya bagian terkait (minim efek berantai).
 
 ---
 
 ## Quick Header untuk Chat Baru (ringkas)
 
 REPO HEADER
-- Module: `[MODULE_PATH]`
+- Module: [MODULE_PATH]
 - Ikuti `docs/internal/ai/AI_RULES.md`.
 - Kontrak stabil: `router.Register`, `v1.Register`, `presenter.HTTPErrorHandler`.
 - Error response: JSON envelope (no secrets).
 - Debug gated: `DEBUG_ROUTES=1`.
-- 1 folder = 1 package. File <= 100 baris.
+- 1 folder = 1 package. File <=100 baris.
 - DoD: gofmt + test + vet + sanity curl.
 
 SNAPSHOT WAJIB (paste output):
