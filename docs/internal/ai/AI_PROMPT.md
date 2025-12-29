@@ -1,79 +1,82 @@
 # AI_PROMPT
 
-Template prompt untuk meminta AI mengerjakan task di repo ini.
-Tujuan: AI tidak mengarang, tidak bikin efek berantai, dan hasilnya bisa kamu audit cepat.
-
-> Aturan utama ada di `docs/internal/ai/AI_RULES.md`. Kalau ada konflik, AI_RULES menang.
+Template prompt untuk tiap task saat minta AI bantu kerja di repo ini.
+Tujuan: AI kerja dari fakta repo (snapshot), keputusan produk jelas, lalu blueprint rapi sebelum eksekusi.
 
 ---
 
-## 1) Prompt Template (copy-paste)
+## Template Prompt (copy-paste)
 
 ### REPO CONTEXT
-- Module: `example.com/your-api`
+- Module: [MODULE_PATH]
 - Ikuti `docs/internal/ai/AI_RULES.md` (hard rules + boundaries + DoD).
-- Router core: `internal/transport/http/router/*` (router induk + v1 modular).
+- Router: `internal/transport/http/router/*` (router induk + v1 modular).
 - Presenter: `internal/transport/http/presenter/*`.
-- Error response: JSON envelope via `presenter.HTTPErrorHandler` (tanpa secrets).
-- Debug routes gated: `DEBUG_ROUTES=1`.
-- 1 folder = 1 package. Target file Go ≤ 100 baris.
+- Error response: JSON envelope via `presenter.HTTPErrorHandler` (no secrets).
+- Debug routes wajib gated: `DEBUG_ROUTES=1`.
+- 1 folder = 1 package. File <= 100 baris (split by responsibility).
 
 ### TASK
 - [TULIS TASK DI SINI]
-  (jelaskan tujuan, scope, dan constraint penting)
+  Contoh: “Tambah endpoint create project hosting statis di module hosting.”
 
-### REQUIRED SNAPSHOT (WAJIB, jangan asumsi)
-Tempel output command ini sebelum AI bikin blueprint:
+### REQUIRED SNAPSHOT (WAJIB, paste output)
+1) Struktur:
 - `tree -L 6 internal/transport/http`
 - `tree -L 6 internal/modules/[TARGET_MODULE]`
+2) Kontrak inti:
 - `cat internal/transport/http/router/router.go`
 - `cat internal/transport/http/router/v1/router.go`
 - `cat internal/transport/http/presenter/error.go`
 - `rg -n "^package " internal/transport/http/router`
-- [EXTRA SNAPSHOT FILES] (opsional, bila task menyentuh area spesifik)
+3) Extra snapshot (kalau relevan):
+- [EXTRA_SNAPSHOT_FILES]
 
-### DECISIONS (WAJIB bila belum jelas)
-Jawab poin yang relevan:
+### DECISIONS (jawab kalau belum jelas)
 - Target client: web browser / API-to-API / keduanya?
+- Token model: JWT access + refresh rotation? atau session opaque?
 - Token delivery: refresh via HttpOnly cookie atau via response body?
-- Expiry access token & refresh token?
-- Apakah butuh step-up (AAL2) / trust score?
-- Audit events minimal apa saja yang wajib dicatat?
-- Dependency real apa yang boleh dipakai untuk integration test?
+- Expiry: access (mis. 15m/30m), refresh (mis. 14d/30d)?
+- Apakah butuh trust score / step-up (AAL2)?
+- Audit events minimal apa yang wajib dicatat?
 
-### WORKFLOW (urutan kerja AI)
-Setelah snapshot + keputusan lengkap:
+### WORKFLOW (AI wajib ikuti)
 1) Ringkas requirement final (bullet list).
-2) Kritik risiko dan tawarkan alternatif best practice (kalau ada).
-3) Buat blueprint (flow + boundaries + file list).
-4) Setelah blueprint jelas, lanjut implementasi (minimal perubahan, tidak menjalar).
-5) Sediakan DoD: gofmt/test/vet + sanity curl + expected output.
+2) Kritik pilihan yang berbahaya + tawarkan alternatif best practice.
+3) Buat blueprint:
+   - flow endpoint
+   - kontrak ports
+   - file list & ownership
+4) Baru eksekusi implementasi setelah blueprint “oke”.
 
-### DELIVERABLES (saat implementasi)
+### DELIVERABLES (saat eksekusi)
 - Daftar file baru/berubah.
 - Isi final tiap file (bukan potongan).
 - Command:
   - `gofmt -w .`
   - `go test ./... -count=1`
   - `go vet ./...`
-- Curl sanity tests + expected response.
-- Jika ada bug, perbaiki hanya di file terkait (minim efek berantai).
+  - `make audit` (kalau tersedia di repo)
+- Curl sanity (kalau HTTP) + expected response.
+- Jika ada bug, fix hanya bagian terkait (minim efek berantai).
 
 ---
 
-## 2) Header Ringkas (untuk chat baru, copy-paste)
-REPO HEADER (ringkas)
-- Module: `example.com/your-api`
-- Ikuti `docs/internal/ai/AI_RULES.md` (hard rules).
-- Kontrak stabil: router.Register, v1.Register, presenter.HTTPErrorHandler.
-- Error response: JSON envelope (no secrets).
-- Debug routes gated: `DEBUG_ROUTES=1`.
-- 1 folder = 1 package. Target file Go ≤ 100 baris.
-- DoD: gofmt + go test + go vet + sanity curl.
+## Quick Header untuk Chat Baru (ringkas)
 
-SNAPSHOT WAJIB (tempel output):
+REPO HEADER
+- Module: [MODULE_PATH]
+- Ikuti `docs/internal/ai/AI_RULES.md`.
+- Kontrak stabil: `router.Register`, `v1.Register`, `presenter.HTTPErrorHandler`.
+- Error response: JSON envelope (no secrets).
+- Debug gated: `DEBUG_ROUTES=1`.
+- 1 folder = 1 package. File <=100 baris.
+- DoD: gofmt + test + vet + sanity curl.
+
+SNAPSHOT WAJIB (paste output):
 - `tree -L 6 internal/transport/http`
-- `tree -L 6 internal/modules/[TARGET]`
+- `tree -L 6 internal/modules/[TARGET_MODULE]`
 - `cat internal/transport/http/router/v1/router.go`
 - `cat internal/transport/http/presenter/error.go`
 - `rg -n "^package " internal/transport/http/router`
+- [EXTRA_SNAPSHOT_FILES]
