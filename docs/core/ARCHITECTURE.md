@@ -1,64 +1,158 @@
 # Architecture
 
-## Goal
-Membangun layanan API untuk hosting statis terlebih dahulu (launch awal), dengan fondasi yang siap diperluas ke hosting dinamis lewat API + worker.
+Dokumen ini menjelaskan peta sistem (high-level) untuk repo **your-api**.
+Tujuan: orang bisa memahami “ini sistem apa, komponen apa saja, jalur request gimana, dan batas tanggung jawabnya” tanpa baca seluruh kode.
 
-## Scope
-- Repo ini berisi:
-  - `cmd/api`: HTTP API (control-plane)
-  - `cmd/worker`: job async (provisioning/sync/billing ticks)
-  - `cmd/migrate`: migrasi schema
-- Web/dashboard berada di repo lain (client) dan hanya consume API.
+**Referensi**
+- Contracts & boundaries: `docs/core/STRUCTURE.md`
+- Threat model: `docs/core/THREAT_MODEL.md`
+- ADR: `docs/adr/*`
+
+---
+
+## Goal
+Launch **hosting statis** lebih dulu dengan fondasi yang siap berkembang menjadi **hosting dinamis** lewat pola API + Worker.
+
+---
+
+## Scope (Repo ini)
+Repo ini berisi:
+- `cmd/api`: HTTP API (control-plane)
+- `cmd/worker`: job async (publish/sync/reconcile)
+- `cmd/migrate`: migrasi schema
+
+Repo ini **tidak** berisi web/dashboard. Web ada di repo lain sebagai client yang hanya consume API.
+
+---
+
+## Non-goals (Saat ini)
+- Tidak mengejar microservices banyak sejak awal.
+- Tidak membangun runtime dinamis dulu (container/serverless/managed runtime baru fase berikutnya).
+- Tidak menjadikan repositori ini tempat “catatan random” (itu tempatnya `docs/notes/`).
+
+---
 
 ## High-level Design
-- Modular monolith (satu repo, boundary ketat), deployable terpisah untuk API dan worker.
-- Per modul: `domain` → `ports` → `usecase` → adapter (`transport/store`).
-- Prinsip: domain/usecase tidak boleh bergantung pada transport/platform secara langsung.
+Model: **modular monolith** (1 repo, boundary ketat), dengan **2 binary deployable**:
+- API (sync request/response)
+- Worker (async jobs)
 
-## Module Map (Current)
-- `auth`: login, session, refresh rotation, trust hooks, audit sink
-- `account`: akun user/tenant
-- `domains`: domain management
-- `hosting`: hosting projects/sites (statis dulu)
-- `trust`: evaluasi trust & policy enforcement
-- `audit`: audit events
-- `system`: health/debug endpoints
+Setiap modul mengikuti pola:
+`domain` → `ports` → `usecase` → adapter (`transport/http`, `store/*`, `platform/*`)
+
+Prinsip utama:
+- Domain/usecase tidak boleh bergantung pada platform/IO secara langsung.
+- IO/vendor ada di `internal/platform/*` dan masuk melalui interface `ports`.
+
+---
 
 ## Runtime Components
-### API (`cmd/api`)
+
+### Control-plane API (`cmd/api`)
+Tugas:
+- Auth & session orchestration
+- Endpoint manajemen account/domain/hosting
+- Validasi request, enforcement middleware, response envelope
+
+Peta:
 - Router: `internal/transport/http/router`
-- Middleware: request_id, access_log, auth_context, jwt_auth, trust/*
+- Middleware: `internal/transport/http/middleware`
+- Presenter: `internal/transport/http/presenter`
+- Modul handlers: `internal/modules/*/transport/http`
 
 ### Worker (`cmd/worker`)
-- Mengkonsumsi queue / menjalankan job:
-  - publish static
-  - sync edge
-  - renewal / reconciliation
-  - (future) runtime provisioning dynamic
+Tugas:
+- Menjalankan job async:
+  - publish static artifact ke objectstore
+  - sync edge (Cloudflare/CloudFront)
+  - reconcile/renewal (future)
+  - provisioning runtime dinamis (future)
+
+Worker mengakses vendor lewat:
+- `internal/platform/queue/*`
+- `internal/platform/objectstore/*`
+- `internal/platform/edge/*`
+- datastore via `internal/platform/datastore/*`
+
+---
+
+## System Topology (Mental Model)
+
+Client (web/dashboard)
+  ↕ HTTPS
+API (Echo) ──↔ Postgres (sessions, identities, accounts, audit, ...)
+   │
+   ├── publish job → Queue (local/SQS)
+   │                 ↕
+   │               Worker ──→ Objectstore (S3/R2)
+   │                 │
+   │                 └────→ Edge (Cloudflare/CloudFront)
+
+External IdP:
+- Google OIDC ↔ API
+
+Catatan: detail security boundary dan mitigasi lihat `docs/core/THREAT_MODEL.md`.
+
+---
+
+## Module Map (Current)
+- `auth`: login/register (Google OIDC), session, refresh rotation, step-up (AAL), trust hooks, audit sink
+- `account`: account/user/tenant (placeholder untuk ownership)
+- `domains`: domain management + verification (future)
+- `hosting`: hosting project/site (static dulu)
+- `trust`: trust scoring + policy enforcement hooks
+- `audit`: audit events (append-only)
+- `system`: health/debug endpoints
+
+---
+
+## Key Flows
+
+### 1) Auth (Google OIDC)
+Ringkas:
+- `/v1/auth/google/start` → buat state/nonce/PKCE (TTL pendek) → redirect ke Google
+- `/v1/auth/google/callback` → verify id_token → resolve identity (provider+sub) → create/link account → create session → issue JWT access + set refresh cookie
+- `/v1/auth/refresh` → CSRF double-submit + Origin allowlist → refresh rotation + anti-reuse → issue access JWT baru
+- `/v1/auth/logout` → revoke session + clear cookies
+- Step-up flow untuk AAL2 (future-hardening)
+
+Sumber keputusan: `docs/adr/0001-auth-google-oidc.md`
+
+### 2) Hosting v1: Static (Launch)
+Target flow:
+1) Client create project/site → API (`hosting` usecase)
+2) API enqueue job publish → Worker
+3) Worker publish artifact ke objectstore (S3/R2)
+4) Worker configure edge (Cloudflare/CloudFront)
+5) Domain attach/verify → `domains` usecase + worker sync (future)
+
+Catatan: implementasi detail static hosting akan ditulis via ADR saat mulai dikerjakan.
+
+### 3) Hosting v2: Dynamic (Future)
+Konsep (tanpa implementasi dulu):
+- Tambah port seperti `RuntimeProvisioner` (create/update/delete runtime)
+- Worker jadi eksekutor provisioning
+- Hosting module tetap abstrak (tidak mengunci ke AWS detail)
+
+Saat keputusan konkret diambil (container vs serverless vs managed runtime), wajib ADR baru.
+
+---
 
 ## Data Ownership (Rule)
 - Setiap modul “memiliki” data/invariants-nya.
-- Dilarang join/random query lintas modul di layer domain/usecase.
-- Interaksi lintas modul melalui `ports`.
+- Dilarang join/random query lintas modul di domain/usecase.
+- Kebutuhan lintas modul wajib lewat port explicit (service/repo interface), bukan import paket modul lain.
 
-## Hosting v1: Static (Launch)
-Alur target (ringkas):
-1) User create project/site → API (`hosting` usecase)
-2) Worker publish artifact ke objectstore (S3/R2) via `platform/objectstore`
-3) Worker configure edge (Cloudflare/CloudFront) via `platform/edge`
-4) Domain attach/verify → `domains` usecase + worker sync
+Enforcement boundary: `scripts/audit_boundaries.sh`
 
-## Hosting v2: Dynamic (Future)
-Tambahan konsep (tanpa implementasi dulu):
-- Port `Provisioner` / `RuntimeProvisioner` untuk create/update/delete runtime
-- Worker menjadi eksekutor provisioning
-- Hosting module tetap abstrak, tidak mengunci ke AWS detail
+---
 
 ## Quality Gates (Target 9/10)
-- Dependency boundary audit wajib lulus (`make audit`)
-- Unit + integration tests minimal untuk auth + postgres (`make check`)
-- Docs wajib punya:
-  - README index
-  - Architecture peta sistem
-  - Threat model dasar
-  - ADR untuk setiap keputusan besar
+Repo dianggap sehat kalau:
+- `make audit` lulus (unit + component + vet + boundary + style checks)
+- Tidak ada doc yang “nyasar” (ADR harus ADR, notes harus notes)
+- Keputusan besar punya ADR
+- Threat model minimal di-update saat:
+  - auth model berubah
+  - trust boundary berubah
+  - hosting dinamis mulai dikerjakan
