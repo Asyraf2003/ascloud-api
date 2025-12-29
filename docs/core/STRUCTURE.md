@@ -140,3 +140,20 @@ Detail: lihat `docs/core/TESTING.md`
   - auth model berubah
   - trust boundary berubah
   - dynamic hosting mulai dikerjakan
+
+---
+
+## Repo Hygiene & Audits (Wajib Hijau)
+
+Repo ini punya audit untuk mencegah “struktur palsu” dan efek berantai.
+
+### Audit scripts
+- `make audit` (gabungan)
+- `bash scripts/docs_audit.sh` (docs wajib lengkap + link valid + ADR format)
+- `bash scripts/testtags_audit.sh` (tag test vs nama file konsisten)
+- `bash scripts/content_audit.sh` (anti file kosong/meaningless)
+
+### Rules
+- Dilarang commit file Go yang hanya berisi `package xxx`.
+  - Jika folder belum dipakai: gunakan `.gitkeep`.
+  - Jika package sudah sah: gunakan `doc.go` (package comment) dan/atau kontrak minimal.

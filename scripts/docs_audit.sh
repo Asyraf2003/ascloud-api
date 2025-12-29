@@ -80,3 +80,10 @@ if bad:
 
 print("OK: no broken relative links")
 PY
+
+echo
+if [[ "$fail" -ne 0 ]]; then
+  echo "== RESULT: FAIL ==" >&2
+  exit 1
+fi
+echo "== RESULT: OK =="
