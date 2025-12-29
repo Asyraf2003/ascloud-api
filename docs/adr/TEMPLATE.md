@@ -1,0 +1,23 @@
+# ADR XXXX: <judul singkat>
+
+Tanggal: YYYY-MM-DD  
+Status: Proposed | Accepted | Deprecated
+
+## Context (Keadaan awal)
+- ...
+
+## Problem (Masalah)
+- ...
+
+## Options (Opsi)
+1) ...
+2) ...
+
+## Decision (Keputusan)
+- ...
+
+## Consequences (Dampak)
+Positif:
+- ...
+Negatif/Risiko:
+- ...
