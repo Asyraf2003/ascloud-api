@@ -90,25 +90,34 @@ Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyolok” ikut jala
 ## Template Build Tags
 
 ### Component test template
----go
+~~~go
 //go:build component
 
 package yourpkg_test
 
 import "testing"
 
-func TestSomethingComponent(t *testing.T) {}
----
+func TestSomethingComponent(t *testing.T) {
+    // Logic component test
+}
+~~~
 
 ### Integration test template
----go
+~~~go
 //go:build integration
 
 package yourpkg_test
 
 import "testing"
 
-func TestSomethingIntegration(t *testing.T) {}
+func TestSomethingIntegration(t *testing.T) {
+    // Logic integration test
+}
+~~~
+
+### Catatan penting build tag
+Build tag harus berada di baris paling atas file (sebelum package), tanpa komentar lain di atasnya. Pastikan ada satu baris kosong setelah build tag dan sebelum deklarasi package.
+
 ---
 
 ## Testing Transactions

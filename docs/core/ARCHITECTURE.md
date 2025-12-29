@@ -103,6 +103,10 @@ External IdP:
 
 Repo ini memakai pola transaksi berbasis `context.Context` supaya operasi multi-step bisa **atomic** tanpa “leak” SQL transaction ke layer usecase.
 
+### Boundary rule (wajib)
+- **Usecase hanya depend ke `ports.Transactor`** (tidak import `postgres`, tidak pegang `*sql.Tx`).
+- Detail implementasi transaksi ada di layer platform/store (IO/vendor layer).
+
 ### Komponen
 - `internal/platform/datastore/postgres/tx.go`
   - `WithTx(ctx, *sql.Tx)` menyisipkan transaksi ke context.
@@ -119,7 +123,11 @@ Repo ini memakai pola transaksi berbasis `context.Context` supaya operasi multi-
 ### Aturan Pakai
 - **Usecase** yang melakukan beberapa operasi write harus dibungkus transaksi:
   - contoh: `GoogleCallback`: create account + link identity harus 1 transaksi.
-- **Repository/Store** wajib memakai `GetExecutor(ctx, db)` untuk semua query/exec, agar otomatis ikut transaksi jika ada.
+- **Adapter Postgres (store/postgres)** wajib memakai `postgres.GetExecutor(ctx, db)` untuk semua query/exec, agar otomatis ikut transaksi jika ada.
+
+### Anti-pattern (dilarang)
+- Memulai transaksi dari repository/store (transaction boundary harus di usecase).
+- Usecase mengimpor package platform (misal `internal/platform/datastore/postgres`) secara langsung.
 
 ### Kenapa begini?
 - Menjamin **Atomicity (ACID)**: tidak ada data “setengah jadi”.
