@@ -1,41 +1,40 @@
 # Notes
 
-Folder ini untuk **catatan/draft**: ide, investigasi, coretan debugging, rencana kasar.
-Notes **bukan kontrak** dan **bukan keputusan final**.
+Folder ini untuk catatan sementara: draft, ide, log debugging, atau potongan diskusi yang belum layak jadi ADR / Core docs.
 
-Kalau sesuatu sudah jadi keputusan yang mengikat arsitektur/kontrak/perilaku:
-➡️ pindahkan jadi ADR di `docs/adr/`.
+> Rule: kalau sudah jadi keputusan arsitektur, pindahkan ke `docs/adr/`.
+> Kalau sudah jadi “aturan main repo”, pindahkan ke `docs/core/` atau `docs/internal/ai/`.
 
 ---
 
 ## Kapan pakai Notes
-- Draft rencana perbaikan
-- Hasil investigasi bug
-- Checklist implementasi sementara
-- Catatan “kenapa dulu begini” tapi belum layak ADR
+- Draft keputusan (belum final).
+- Hasil investigasi/debugging.
+- Checklist kerja / TODO sementara.
+- Catatan refactor yang belum dieksekusi.
 
-## Kapan HARUS jadi ADR (bukan Notes)
-- Ubah boundary rules
-- Ubah auth model / token model
-- Ubah data ownership / schema besar
-- Ubah strategi hosting (statis/dinamis), queue, provisioning
-- Ubah policy security (CORS/CSRF/trust/rate limit)
+## Kapan harus keluar dari Notes
+- Keputusan final yang mempengaruhi arsitektur/perilaku sistem → `docs/adr/`
+- Dokumen permanen yang jadi pedoman repo → `docs/core/`
+- Aturan kerja AI / template → `docs/internal/ai/`
 
 ---
 
-## Format nama file
-Gunakan format tanggal supaya gampang audit:
-`YYYY-MM-DD-<topik-singkat>.md`
+## Format penamaan file
+Gunakan format:
+`YYYY-MM-DD-judul-singkat.md`
 
 Contoh:
 - `2025-12-29-strukturnulis.md`
-- `2025-12-30-auth-refresh-reuse-ideas.md`
+- `2025-12-30-auth-refresh-debug.md`
 
 ---
 
-## Template notes (optional)
-Minimal:
-- Context
-- Temuan/masalah
-- Rencana / opsi
-- Next action
+## Template isi notes (minimal)
+Setiap notes idealnya punya:
+
+- **Context**: keadaan awal
+- **Problem**: apa yang rusak / bingung
+- **Findings**: temuan penting (fakta)
+- **Next actions**: langkah lanjut
+- **Status**: draft / done / migrated-to-ADR / obsolete
