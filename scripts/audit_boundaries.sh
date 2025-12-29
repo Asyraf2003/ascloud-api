@@ -26,10 +26,23 @@ check_imports() {
   for imp in "${arr[@]}"; do
     [[ -z "${imp// }" ]] && continue
 
-    # DOMAIN: stdlib only (no internal module import, no third-party module path)
+    # DOMAIN: stdlib + internal/shared (pure). No platform/transport/modules/third-party.
     if is_domain_pkg "$pkg"; then
-      if [[ "$imp" == "$MOD/"* ]] || [[ "$imp" == *.* ]]; then
+      # allow internal/shared/*
+      if [[ "$imp" == "$MOD/internal/shared/"* ]]; then
+        continue
+      fi
+
+      # forbid any other internal/*
+      if [[ "$imp" == "$MOD/"* ]]; then
         bad "$pkg imports forbidden: $imp"
+        continue
+      fi
+
+      # forbid third-party (heuristic: contains a dot)
+      if [[ "$imp" == *.* ]]; then
+        bad "$pkg imports forbidden: $imp"
+        continue
       fi
     fi
 
