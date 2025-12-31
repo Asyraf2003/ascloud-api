@@ -25,7 +25,9 @@ func mustVerifier(t *testing.T) *jwt.Verifier {
 
 func TestRouterHealth(t *testing.T) {
 	e := echo.New()
-	Register(e, mustVerifier(t))
+
+	SetAccessTokenVerifier(mustVerifier(t))
+	Register(e)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()

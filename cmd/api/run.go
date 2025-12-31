@@ -49,12 +49,12 @@ func run() {
 
 	v1AuthRouter.InitPolicy(authCfg)
 
-	// JWT verifier sesuai verifier.go kamu
 	jwtv, err := jwtp.NewHMACVerifier(authCfg.JWT.Issuer, authCfg.JWT.Audience, authCfg.JWT.Secret)
 	if err != nil {
 		log.Error("jwt verifier init failed", "err", err)
 		os.Exit(1)
 	}
+	router.SetAccessTokenVerifier(jwtv)
 
 	if err := wire.WireAuthGoogle(db, authCfg); err != nil {
 		log.Error("wire auth google failed", "err", err)
@@ -62,7 +62,7 @@ func run() {
 	}
 
 	e := server.New(log, db)
-	router.Register(e, jwtv) // <- signature router diubah
+	router.Register(e)
 
 	go func() {
 		log.Info("starting", "addr", addr)

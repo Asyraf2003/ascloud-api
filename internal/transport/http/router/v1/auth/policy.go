@@ -5,7 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"example.com/your-api/internal/config"
 	"example.com/your-api/internal/modules/auth/domain"
 	"example.com/your-api/internal/transport/http/middleware/trust"
 )
@@ -27,10 +26,7 @@ func mwAuthCookieStrict() []echo.MiddlewareFunc {
 
 	mws := make([]echo.MiddlewareFunc, 0, 4)
 
-	// Opsi C: HTTPS enforce tergantung policy (prod ketat, dev boleh longgar).
-	// Sementara: kita pakai heuristic cookie secure.
-	// (Kalau CookieSecure true, harus HTTPS.)
-	if config.LoadAuth().Security.CookieSecure { // <- ini masih load, kita rapikan setelah lihat auth config struct
+	if pc.requireHTTPS {
 		mws = append(mws, trust.RequireHTTPS())
 	}
 

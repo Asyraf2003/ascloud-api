@@ -9,6 +9,7 @@ import (
 type policyConfig struct {
 	allowedOrigins []string
 	csrfCookie     string
+	requireHTTPS   bool
 }
 
 var policy atomic.Value // *policyConfig
@@ -17,6 +18,7 @@ func InitPolicy(cfg config.AuthConfig) {
 	pc := &policyConfig{
 		allowedOrigins: cfg.Security.AllowedOrigins,
 		csrfCookie:     cfg.Session.CSRFCookieName,
+		requireHTTPS:   cfg.Security.CookieSecure,
 	}
 
 	if len(pc.allowedOrigins) == 0 {
@@ -29,6 +31,10 @@ func InitPolicy(cfg config.AuthConfig) {
 	policy.Store(pc)
 }
 
+func RequireHTTPS() bool {
+	return getPolicy().requireHTTPS
+}
+
 func getPolicy() *policyConfig {
 	if v, ok := policy.Load().(*policyConfig); ok && v != nil {
 		return v
@@ -36,5 +42,6 @@ func getPolicy() *policyConfig {
 	return &policyConfig{
 		allowedOrigins: []string{"http://localhost:8080"},
 		csrfCookie:     "csrf",
+		requireHTTPS:   false,
 	}
 }

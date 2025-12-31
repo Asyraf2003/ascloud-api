@@ -34,8 +34,8 @@ func TestAccessLogAddsRequestID(t *testing.T) {
 	e.Use(middleware.RequestID())
 	e.Use(middleware.AccessLog(log))
 
-	// router.Register sekarang butuh verifier (buat protected route wiring).
-	router.Register(e, mustVerifier(t))
+	router.SetAccessTokenVerifier(mustVerifier(t))
+	router.Register(e)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()

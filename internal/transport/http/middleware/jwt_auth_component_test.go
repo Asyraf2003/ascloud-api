@@ -24,9 +24,12 @@ func TestJWTAuth_OK(t *testing.T) {
 
 	iss, _ := j.NewHMACIssuer("iss", "aud", "kid", "secretsecret", 30*time.Minute)
 	vf, _ := j.NewHMACVerifier("iss", "aud", "secretsecret")
-	tok, _, _ := iss.IssueAccessToken(context.Background(), ports.AccessTokenRequest{AccountID: "a", SessionID: "s", TrustLevel: "aal1"})
+	tok, _, _ := iss.IssueAccessToken(context.Background(), ports.AccessTokenRequest{
+		AccountID: "a", SessionID: "s", TrustLevel: "aal1",
+	})
 
-	e.GET("/p", func(c echo.Context) error { return c.String(200, "ok") }, JWTAuth(vf))
+	SetAccessTokenVerifier(vf)
+	e.GET("/p", func(c echo.Context) error { return c.String(200, "ok") }, JWTAuth())
 
 	r := httptest.NewRequest(http.MethodGet, "/p", nil)
 	r.Header.Set("Authorization", "Bearer "+tok)
@@ -42,7 +45,8 @@ func TestJWTAuth_Missing(t *testing.T) {
 	e.HTTPErrorHandler = presenter.HTTPErrorHandler
 	vf, _ := j.NewHMACVerifier("iss", "aud", "secretsecret")
 
-	e.GET("/p", func(c echo.Context) error { return c.String(200, "ok") }, JWTAuth(vf))
+	SetAccessTokenVerifier(vf)
+	e.GET("/p", func(c echo.Context) error { return c.String(200, "ok") }, JWTAuth())
 
 	r := httptest.NewRequest(http.MethodGet, "/p", nil)
 	w := httptest.NewRecorder()

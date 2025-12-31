@@ -5,7 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"example.com/your-api/internal/platform/token/jwt"
 	"example.com/your-api/internal/transport/http/middleware"
 	"example.com/your-api/internal/transport/http/middleware/trust"
 
@@ -19,7 +18,7 @@ import (
 	trustPkg "example.com/your-api/internal/transport/http/router/v1/trust"
 )
 
-func Register(e *echo.Echo, jwtv *jwt.Verifier) {
+func Register(e *echo.Echo) {
 	base := e.Group("/v1")
 
 	pub := base.Group("")
@@ -27,16 +26,20 @@ func Register(e *echo.Echo, jwtv *jwt.Verifier) {
 
 	authG := base.Group("")
 	authG.Use(trust.Init("auth", 50))
-	authG.Use(trust.RequireHTTPS())
+	if authPkg.RequireHTTPS() {
+		authG.Use(trust.RequireHTTPS())
+	}
 	authG.Use(trust.UserAgentScore())
 	authG.Use(trust.RateLimit("auth_group", 120, time.Minute))
 	authPkg.Register(authG)
 
 	protected := base.Group("")
 	protected.Use(trust.Init("api", 50))
-	protected.Use(trust.RequireHTTPS())
+	if authPkg.RequireHTTPS() {
+		protected.Use(trust.RequireHTTPS())
+	}
 	protected.Use(trust.UserAgentScore())
-	protected.Use(middleware.JWTAuth(jwtv))
+	protected.Use(middleware.JWTAuth())
 	protected.Use(trust.ScoreFromAAL())
 	protected.Use(trust.Enforce(trust.Thresholds{Allow: 75, StepUp: 50}))
 

@@ -7,14 +7,15 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"example.com/your-api/internal/modules/auth/domain"
-	"example.com/your-api/internal/platform/token/jwt"
 	"example.com/your-api/internal/shared/apperr"
+	"example.com/your-api/internal/shared/authn"
 )
 
-func JWTAuth(v *jwt.Verifier) echo.MiddlewareFunc {
+func JWTAuth() echo.MiddlewareFunc {
+	v := MustAccessTokenVerifier()
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			// biar preflight CORS gak mati konyol
 			if c.Request().Method == http.MethodOptions {
 				return next(c)
 			}
@@ -45,7 +46,7 @@ func JWTAuth(v *jwt.Verifier) echo.MiddlewareFunc {
 	}
 }
 
-func AccessClaims(c echo.Context) (jwt.Claims, bool) {
-	v, ok := c.Get(CtxAccessClaimsKey).(jwt.Claims)
+func AccessClaims(c echo.Context) (authn.Claims, bool) {
+	v, ok := c.Get(CtxAccessClaimsKey).(authn.Claims)
 	return v, ok
 }

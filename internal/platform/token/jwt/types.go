@@ -1,5 +1,7 @@
 package jwt
 
+import "example.com/your-api/internal/shared/authn"
+
 type Header struct {
 	Alg string `json:"alg"`
 	Typ string `json:"typ"`
@@ -18,15 +20,4 @@ type Payload struct {
 	EXP int64  `json:"exp"`
 }
 
-type Claims struct {
-	AccountID  string
-	SessionID  string
-	TrustLevel string
-
-	JWTID  string
-	Issuer string
-	Aud    string
-
-	IssuedAt  int64
-	ExpiresAt int64
-}
+type Claims = authn.Claims
