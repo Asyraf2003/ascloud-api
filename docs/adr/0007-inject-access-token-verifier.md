@@ -48,3 +48,6 @@ Mitigasi:
 - `MustAccessTokenVerifier()` fail-fast saat verifier belum diset.
 - Component tests memastikan route protected benar-benar pakai verifier yang di-set.
 - Disiplin bootstrap: `SetAccessTokenVerifier()` dipanggil sebelum `router.Register()`.
+
+## Catatan:
+- ADR 0005 dideprecate karena duplikat; ADR 0007 adalah canonical.

@@ -1,35 +1,33 @@
-# ADR 0001: Access token verifier injection via router -> middleware
+# ADR 0005: Access token verifier injection via router -> middleware
 
-Tanggal: 2025-12-30 10:00 WITA
-Status: Accepted
+Tanggal: 2025-12-30 10:00 WITA  
+Status: Deprecated
 
 ## Context (Keadaan awal)
 - Router v1 membutuhkan verifier untuk memasang JWT middleware.
-- Awalnya verifier di-pass lewat signature router.Register/v1.Register.
-- Perubahan auth/token berpotensi memaksa perubahan signature router (efek berantai ke cmd/test).
+- Pada iterasi awal, verifier sempat di-pass lewat signature `router.Register/v1.Register`.
+- Konsep “verifier injection” kemudian distabilkan lewat mekanisme setter agar kontrak router tidak mudah berubah.
 
 ## Problem (Masalah)
-- Public contract router tidak stabil.
-- Test & wiring jadi rapuh setiap kali auth token berubah.
-- Risiko “transport layer ikut kebawa domain/token refactor”.
+- Dokumen ini menduplikasi keputusan yang sama dengan ADR 0007.
+- Duplikasi membuat audit rancu: seolah ada 2 keputusan berbeda, padahal satu keputusan yang sama (stabilisasi kontrak router + verifier provider).
 
 ## Options (Opsi)
-1) Pass verifier lewat parameter router.Register/v1.Register
-   - (+) eksplisit dependency
-   - (-) contract router tidak stabil, efek berantai ke call sites
-2) Buat global provider verifier (set sekali saat bootstrap), middleware mengambil dari provider
-   - (+) router contract stabil, perubahan auth minim ripple
-   - (-) ada global state, perlu fail-fast jika belum di-init
+1) Biarkan dua ADR tetap Accepted
+   - (+) tidak perlu edit
+   - (-) audit makin membingungkan, risk salah rujuk
+2) Deprecate ADR 0005 dan jadikan ADR 0007 sebagai canonical
+   - (+) audit jelas, satu sumber kebenaran
+   - (-) perlu update status dan cross-reference
 
 ## Decision (Keputusan)
-- Pakai provider verifier: bootstrap memanggil router.SetAccessTokenVerifier(verifier).
-- middleware.JWTAuth() mengambil verifier dari provider dan fail-fast bila belum diset.
+- Memilih opsi (2): ADR 0005 dideprecate.
+- Keputusan final dan canonical ada di **ADR 0007: Inject Access Token Verifier via Router/Middleware Setter (stabilkan kontrak router)**.
 
 ## Consequences (Dampak)
 Positif:
-- Signature router tetap stabil.
-- Wiring auth/token tidak memaksa perubahan transport contract.
-- Test lebih sederhana (set verifier sekali).
+- Satu sumber kebenaran untuk keputusan verifier injection.
+- Audit dan reasoning lebih rapi.
 
 Negatif/Risiko:
-- Global state: perlu disiplin bootstrap order dan fail-fast untuk menghindari silent insecure behavior.
+- Reader harus diarahkan ke ADR 0007 (mitigasi: link/catatan eksplisit di dokumen ini).
