@@ -1,7 +1,7 @@
 # ADR 0005: Access token verifier injection via router -> middleware
 
 Tanggal: 2025-12-30 10:00 WITA  
-Status: Deprecated
+Status: Deprecated (Superseded by ADR 0007)
 
 ## Context (Keadaan awal)
 - Router v1 membutuhkan verifier untuk memasang JWT middleware.
