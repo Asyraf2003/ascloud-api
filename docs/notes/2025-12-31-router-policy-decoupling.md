@@ -1,7 +1,7 @@
 # Note: Decouple Router dari Config LoadAuth (policy snapshot)
 
 Tanggal: 2025-12-31  
-Status: Active
+Status: Done
 
 ## Context
 - Router v1 perlu keputusan runtime seperti "require HTTPS atau tidak" untuk group auth/protected.
@@ -33,4 +33,4 @@ Status: Active
 
 ## Next Actions
 - [ ] Pastikan semua keputusan router/middleware yang berbasis config lewat policy snapshot, bukan LoadAuth.
-- [ ] Tambahkan test kecil untuk memastikan policy default aman ketika InitPolicy belum dipanggil (fail-fast atau default conservative).
+- [ ] Implementasi Guard Rail pada Policy: Jika InitPolicy() belum dipanggil, pemanggilan getter policy wajib memicu fail-fast (panic) untuk mencegah silent insecure behavior dan memastikan integritas audit.
