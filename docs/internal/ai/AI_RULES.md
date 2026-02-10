@@ -7,17 +7,30 @@ Tujuan:
 - Boundary jelas (hexagonal/modular).
 - Output bisa diaudit (DoD jelas).
 - AI tidak ngarang (wajib snapshot).
+- Saat butuh keputusan, AI memberi opsi + plus/minus + rekomendasi yang sesuai kondisi kita.
 
 Jika ada konflik dokumen, file ini menang.
 
 ---
 
 ## Repo Identity
-- Module path: `example.com/your-api`
+- Module path: **HARUS sama persis dengan `go.mod`** (jangan placeholder).
 - Primary language: Go
 - HTTP framework: Echo
 - Default HTTP addr: `:8080`
 - Timezone: WITA (`Asia/Makassar`)
+
+---
+
+## Current Product Baseline (Aktif)
+Target implementasi saat ini:
+- CDN: CloudFront
+- Object storage: S3
+- Compute: Lambda (API + Worker)
+- Queue: SQS
+- Metadata DB: DynamoDB (rencana MVP)
+- Provider lain (Cloudflare/R2/Postgres/etc): **INACTIVE untuk sekarang**
+  - boleh tetap ada sebagai persiapan, tapi jangan dipakai tanpa keputusan eksplisit.
 
 ---
 
@@ -30,9 +43,10 @@ Jika ada konflik dokumen, file ini menang.
 
 ### 2) Package & file hygiene
 - 1 folder = 1 package (jangan campur package dalam satu folder).
-- File tidak boleh > 100 baris.
+- File **diusahakan** <= 100 baris.
   - Split by responsibility (router per area, presenter per concern, usecase per flow).
-  - Jika ada alasan kuat >100 baris, tulis alasan singkat dengan `#TODO: justify`.
+  - **Exception diperbolehkan** untuk file yang memang "kritikal/contract/glue" dan memecahnya membuat alur sulit diikuti.
+  - Jika >100 baris, tulis alasan singkat dengan `#TODO: justify` (1–2 kalimat).
 
 ### 3) Debug endpoints
 - Dilarang menambah endpoint debug kecuali diminta.
@@ -51,6 +65,20 @@ Jika ada konflik dokumen, file ini menang.
 - JSONB hanya untuk storage/meta internal (audit/flexible fields).
 - JSONB/meta tidak pernah dikirim mentah ke client.
 - Audit meta wajib allowlist/redact.
+
+---
+
+## Decision Policy (cara AI bertanya keputusan)
+Jika ada hal yang belum terkunci dan mempengaruhi arsitektur/kontrak:
+- AI wajib memberi 2–4 opsi.
+- Tiap opsi wajib ada:
+  - plus/minus singkat
+  - dampak ke blueprint/kondisi repo
+- AI wajib memberi rekomendasi default yang paling cocok dengan:
+  - baseline AWS aktif
+  - standar enterprise yang relevan
+  - tujuan cost-efficiency serverless
+- Jika keputusan sudah pernah disepakati, AI **tidak boleh nanya ulang**.
 
 ---
 
@@ -149,6 +177,7 @@ Wajib menyertakan:
 
 ## Required Snapshot (sebelum blueprint)
 AI wajib minta dan user wajib paste output:
+- `cat go.mod` (untuk module path)
 - `tree -L 6 internal/transport/http`
 - `tree -L 6 internal/modules/<target>`
 - `cat internal/transport/http/router/router.go`
@@ -162,3 +191,4 @@ AI wajib minta dan user wajib paste output:
 ## Update Policy (biar tidak membusuk)
 - Kontrak/boundary berubah → update file ini + buat ADR bila relevan.
 - Struktur/path berubah → update snapshot list (jangan ada path ngaco).
+- Baseline provider berubah (mis. non-AWS aktif) → update "Current Product Baseline".

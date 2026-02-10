@@ -8,7 +8,7 @@ import (
 type AuthState struct {
 	Nonce        string
 	CodeVerifier string
-	Purpose      string // login | stepup
+	Purpose      string 
 	CreatedAt    time.Time
 }
 
