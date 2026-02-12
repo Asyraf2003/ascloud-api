@@ -1,11 +1,13 @@
-# Testing
+# Testing (AWS-First)
 
 Dokumen ini menjelaskan kategori test di repo ini, aturan build tags, dan cara menjalankannya.
-Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyolok” ikut jalan di pipeline yang salah.
+Tujuan: test suite deterministic, audit-friendly, dan tidak “nyolok” ikut jalan di pipeline yang salah.
+
+---
 
 ## Prinsip
-- Default test harus aman dijalankan kapan pun (lokal/CI) tanpa butuh service eksternal.
-- Test yang butuh dependency real (DB/network) wajib dipisahkan dengan build tag.
+- Default test aman dijalankan kapan pun (lokal/CI) tanpa dependency eksternal.
+- Test yang butuh dependency real (AWS services / network / DB) wajib dipisahkan via build tag.
 - Jangan menyebut sesuatu “integration” kalau tidak benar-benar menyentuh dependency real.
 
 ---
@@ -13,119 +15,59 @@ Tujuan: test suite bisa diaudit, deterministic, dan tidak “nyolok” ikut jala
 ## Kategori Test
 
 ### 1) Unit Tests (default)
-**Definisi**
-- Deterministic.
-- Tidak ada network, tidak ada DB real, tidak butuh port listen.
-- Dependency di-mock/fake via interface (`ports`).
+- Deterministic, tanpa network/DB real.
+- Dependency di-fake/mock via interface `ports`.
 
-**Build tag**
-- Tidak pakai build tag (default).
-
-**Run**
+Run:
 - `make test-unit`
-- (setara) `go test ./... -count=1`
-
-**Contoh cocok**
-- Domain logic, hashing/crypto helper, policy evaluator, JWT codec/verifier, usecase dengan fake store.
+- `go test ./... -count=1`
 
 ---
 
 ### 2) Component Tests (HTTP in-memory)
-**Definisi**
-- Menguji HTTP layer (router/middleware/handler) memakai `httptest` + Echo in-memory.
-- Tidak menyentuh DB real dan tidak listen port.
-- Fokus: wiring route + middleware enforcement + response envelope.
+- Uji router/middleware/handler via `httptest` + Echo in-memory.
+- Tanpa DB real dan tidak listen port.
 
-**Build tag**
-- Wajib: `//go:build component`
-- Alasan: supaya component test tidak ikut “default unit test” kalau jumlahnya besar dan butuh setup HTTP.
-
-**Run**
+Run:
 - `make test-component`
-- (setara) contoh:
-  - `go test -tags=component ./internal/transport/http/... -count=1`
-  - `go test -tags=component ./internal/modules/auth/transport/http/... -count=1`
-
-**Contoh cocok**
-- CSRF cookie/header enforcement → 403
-- Origin not allowed → 403
-- OPTIONS passthrough → 204
-- /health returns 200
-- JWTAuth middleware → 401/200
+- `go test -tags=component ./internal/transport/http/... -count=1`
 
 ---
 
-### 3) Integration Tests (real dependencies)
-**Definisi**
-- Menyentuh dependency real: Postgres, migrations, queue, object storage, dsb.
-- Biasanya menggunakan `docker compose` untuk bring-up deps.
+### 3) Integration Tests (real dependencies: AWS)
+Menyentuh dependency real, contoh:
+- DynamoDB (AWS sandbox atau local emulator)
+- S3 (AWS sandbox atau localstack)
+- SQS (AWS sandbox atau localstack)
+- (future) CloudFront-related tests lebih cocok via contract tests / staging.
 
-**Build tag**
-- Wajib: `//go:build integration`
-- Integration test tidak boleh jalan di default `make test`.
+Build tag:
+- `//go:build integration`
 
-**Run**
+Run:
 - `make test-integration`
-- (setara) `go test -tags=integration ./... -count=1`
+- `go test -tags=integration ./... -count=1`
 
-**Catatan**
-- Integration tests harus fail fast dengan error yang jelas kalau dependency belum siap.
-
----
-
-## Aturan Penamaan & Lokasi
-
-### File naming
-- Unit: `*_test.go`
-- Component: `*_component_test.go` + build tag `component` (recommended)
-- Integration: `*_integration_test.go` + build tag `integration` (recommended)
-
-### Lokasi
-- Unit test: dekat code yang dites (co-located).
-- Component test: co-located di package HTTP terkait.
-- Integration test: co-located atau dikumpulkan di `internal/integration/...` atau `tests/integration/...` (pilih salah satu, konsisten).
+Catatan:
+- Integration tests harus fail fast dengan error jelas jika dependency belum tersedia.
+- Prefer environment “sandbox” yang tidak pakai data produksi.
 
 ---
 
 ## Template Build Tags
-
-### Component test template
-~~~go
-//go:build component
-
-package yourpkg_test
-
-import "testing"
-
-func TestSomethingComponent(t *testing.T) {
-    // Logic component test
-}
-~~~
-
-### Integration test template
-~~~go
-//go:build integration
-
-package yourpkg_test
-
-import "testing"
-
-func TestSomethingIntegration(t *testing.T) {
-    // Logic integration test
-}
-~~~
-
-### Catatan penting build tag
-Build tag harus berada di baris paling atas file (sebelum package), tanpa komentar lain di atasnya. Pastikan ada satu baris kosong setelah build tag dan sebelum deklarasi package.
+(Component / Integration templates tetap seperti sekarang.)
 
 ---
 
-## Testing Transactions
+## Konsistensi & Idempotency (wajib diuji)
+Untuk flow event-driven (queue → worker):
+- Job harus idempotent (replay SQS / retry worker tidak bikin state rusak).
+- Update metadata harus pakai mekanisme yang aman (conditional update / versioning / transact-write bila dipakai).
+- Error vendor harus dimapping ke `AppError` atau error_code internal yang aman.
 
-Usecase menerima dependency `ports.Transactor`:
-- Unit test menggunakan `ports.NoopTransactor` agar flow bisa dites tanpa DB.
-- Integration test (tag `integration`) digunakan untuk validasi transaksi nyata di Postgres.
+---
 
-Aturan:
-- Repo/store yang butuh transaksi harus selalu query via `postgres.GetExecutor(ctx, db)`.
-- Test yang mengecek atomicity (rollback/commit) wajib integration test.
+## Legacy Tests (historical)
+Jika masih ada integration test legacy Postgres:
+- harus diisolasi dengan build tag `legacy_postgres` (dan/atau `integration`),
+- tidak boleh jalan pada default pipeline AWS-first.

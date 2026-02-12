@@ -1,7 +1,6 @@
 package server
 
 import (
-	"database/sql"
 	"log/slog"
 	"os"
 	"strings"
@@ -13,7 +12,7 @@ import (
 	"example.com/your-api/internal/transport/http/presenter"
 )
 
-func New(log *slog.Logger, db *sql.DB) *echo.Echo {
+func New(log *slog.Logger, db any) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true

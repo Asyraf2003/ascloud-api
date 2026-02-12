@@ -12,9 +12,10 @@ GOFMT  ?= gofmt
 
 include make/audit.mk
 include make/boundary.mk
-include make/db.mk
-include make/dev.mk
+include make/legacy_db_postgres.mk
+include make/legacy_dev_postgres.mk
 include make/go.mk
+include make/quality.mk
 include make/help.mk
 include make/prereq.mk
 include make/sanity.mk

@@ -1,8 +1,9 @@
 package http
 
 import (
-	"database/sql"
+	"context"
 	"net/http"
+	"reflect"
 
 	"github.com/labstack/echo/v4"
 )
@@ -17,15 +18,35 @@ func (h *Handler) Health(c echo.Context) error {
 }
 
 // Ready: OK kalau DB connect (kalau DB ada).
-// Kalau DB nil, tetap OK (fase awal belum pakai DB).
+// Kalau DB tidak ada / tidak support ping, tetap OK (fase awal belum pakai DB).
 func (h *Handler) Ready(c echo.Context) error {
 	v := c.Get("db")
-	db, _ := v.(*sql.DB)
-	if db == nil {
+	if v == nil {
 		return c.JSON(http.StatusOK, map[string]any{"ready": true, "db": "skipped"})
 	}
-	if err := db.PingContext(c.Request().Context()); err != nil {
+
+	p, ok := v.(interface {
+		PingContext(context.Context) error
+	})
+	if !ok || isNil(p) {
+		return c.JSON(http.StatusOK, map[string]any{"ready": true, "db": "skipped"})
+	}
+
+	if err := p.PingContext(c.Request().Context()); err != nil {
 		return c.JSON(http.StatusServiceUnavailable, map[string]any{"ready": false, "db": "down"})
 	}
 	return c.JSON(http.StatusOK, map[string]any{"ready": true, "db": "up"})
+}
+
+func isNil(v any) bool {
+	if v == nil {
+		return true
+	}
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Slice, reflect.Func, reflect.Chan:
+		return rv.IsNil()
+	default:
+		return false
+	}
 }

@@ -1,4 +1,4 @@
-# ADR 0008: Kontrak Redirect pada Google OIDC (bedakan callback URL vs return_to)
+# ADR 0009: Kontrak Redirect pada Google OIDC (bedakan callback URL vs return_to)
 
 Tanggal: 2025-12-31  
 Status: Proposed

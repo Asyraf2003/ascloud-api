@@ -1,7 +1,20 @@
 package ports
 
-import trustports "example.com/your-api/internal/modules/trust/ports"
+import "context"
 
-type TrustSignals = trustports.TrustSignals
-type TrustDecision = trustports.TrustDecision
-type TrustEvaluator = trustports.TrustEvaluator
+type TrustSignals struct {
+	AccountID string
+	Purpose   string // login|stepup|refresh
+	IP        string
+	UserAgent string
+}
+
+type TrustDecision struct {
+	Allow         bool
+	RequireStepUp bool
+	Reason        string
+}
+
+type TrustEvaluator interface {
+	Evaluate(ctx context.Context, s TrustSignals) (TrustDecision, error)
+}

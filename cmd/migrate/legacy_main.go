@@ -1,3 +1,6 @@
+//go:build legacy_postgres
+// +build legacy_postgres
+
 package main
 
 import (

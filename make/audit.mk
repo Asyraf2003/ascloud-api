@@ -51,5 +51,5 @@ audit-testtags:
 audit-content:
 	bash scripts/content_audit.sh
 
-audit: prereq check audit-lines audit-packages audit-makefiles audit-docs audit-testtags audit-content
+audit: prereq-core check audit-lines audit-packages audit-makefiles audit-docs audit-testtags audit-content
 	@echo "OK: audit passed"
