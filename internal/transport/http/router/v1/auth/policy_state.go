@@ -21,9 +21,6 @@ func InitPolicy(cfg config.AuthConfig) {
 		requireHTTPS:   cfg.Security.CookieSecure,
 	}
 
-	if len(pc.allowedOrigins) == 0 {
-		pc.allowedOrigins = []string{"http://localhost:8080"}
-	}
 	if pc.csrfCookie == "" {
 		pc.csrfCookie = "csrf"
 	}
@@ -39,8 +36,9 @@ func getPolicy() *policyConfig {
 	if v, ok := policy.Load().(*policyConfig); ok && v != nil {
 		return v
 	}
+	// Startup should call InitPolicy(). If it didn't, we prefer failing closed.
 	return &policyConfig{
-		allowedOrigins: []string{"http://localhost:8080"},
+		allowedOrigins: nil,
 		csrfCookie:     "csrf",
 		requireHTTPS:   false,
 	}

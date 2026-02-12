@@ -2,8 +2,6 @@ package server
 
 import (
 	"log/slog"
-	"os"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
@@ -12,13 +10,13 @@ import (
 	"example.com/your-api/internal/transport/http/presenter"
 )
 
-func New(log *slog.Logger, db any) *echo.Echo {
+func New(log *slog.Logger, db any, allowedOrigins []string) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
 
 	e.Use(middleware.RequestID())
-	e.Use(echomw.CORSWithConfig(corsConfig()))
+	e.Use(echomw.CORSWithConfig(corsConfig(allowedOrigins)))
 	e.Use(middleware.AccessLog(log))
 	e.Use(echomw.Recover())
 
@@ -35,8 +33,7 @@ func New(log *slog.Logger, db any) *echo.Echo {
 	return e
 }
 
-func corsConfig() echomw.CORSConfig {
-	origins := getenvList("AUTH_ALLOWED_ORIGINS", "http://localhost:8080")
+func corsConfig(origins []string) echomw.CORSConfig {
 	return echomw.CORSConfig{
 		AllowOrigins:     origins,
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
@@ -44,20 +41,4 @@ func corsConfig() echomw.CORSConfig {
 		ExposeHeaders:    []string{echo.HeaderXRequestID},
 		AllowCredentials: true,
 	}
-}
-
-func getenvList(k, def string) []string {
-	raw := strings.TrimSpace(os.Getenv(k))
-	if raw == "" {
-		raw = def
-	}
-	parts := strings.Split(raw, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			out = append(out, p)
-		}
-	}
-	return out
 }

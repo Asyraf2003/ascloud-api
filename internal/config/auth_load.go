@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func LoadAuth() AuthConfig {
+func LoadAuth(env string) AuthConfig {
 	atoi := func(s string, def int) int {
 		n, err := strconv.Atoi(s)
 		if err != nil {
@@ -25,12 +25,23 @@ func LoadAuth() AuthConfig {
 	stateMin := atoi(getenv("AUTH_STATE_TTL_MIN", "5"), 5)
 	refreshH := atoi(getenv("AUTH_REFRESH_TTL_HOURS", "168"), 168)
 
+	// Dev defaults are allowed. Non-dev must be explicit (fail-fast via Validate()).
+	redirectDef := "http://localhost:8080/v1/auth/google/callback"
+	originsDef := "http://localhost:8080"
+	pepperDef := "dev-pepper-dev-pepper" // >= 16
+
+	if env != "dev" {
+		redirectDef = ""
+		originsDef = ""
+		pepperDef = ""
+	}
+
 	return AuthConfig{
 		Google: GoogleAuthConfig{
 			ClientID:     getenv("AUTH_GOOGLE_CLIENT_ID", ""),
 			ClientSecret: getenv("AUTH_GOOGLE_CLIENT_SECRET", ""),
 			Issuer:       getenv("AUTH_GOOGLE_ISSUER", "https://accounts.google.com"),
-			RedirectURL:  getenv("AUTH_GOOGLE_REDIRECT_URL", "http://localhost:8080/v1/auth/google/callback"),
+			RedirectURL:  getenv("AUTH_GOOGLE_REDIRECT_URL", redirectDef),
 		},
 		JWT: JWTConfig{
 			Issuer:    getenv("AUTH_JWT_ISSUER", "example.com/your-api"),
@@ -48,9 +59,9 @@ func LoadAuth() AuthConfig {
 			CookieDomain:   getenv("COOKIE_DOMAIN", ""),
 			CookieSecure:   atob(getenv("COOKIE_SECURE", "false"), false),
 			CookieSameSite: getenv("COOKIE_SAMESITE", "lax"),
-			AllowedOrigins: getenvListCSV("AUTH_ALLOWED_ORIGINS", "http://localhost:8080"),
+			AllowedOrigins: getenvListCSV("AUTH_ALLOWED_ORIGINS", originsDef),
 		},
 		TTL:  AuthTTLConfig{StateTTL: time.Duration(stateMin) * time.Minute},
-		Hash: HashConfig{RefreshPepper: getenv("AUTH_REFRESH_PEPPER", "dev-pepper")},
+		Hash: HashConfig{RefreshPepper: getenv("AUTH_REFRESH_PEPPER", pepperDef)},
 	}
 }

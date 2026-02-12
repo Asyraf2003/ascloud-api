@@ -34,7 +34,7 @@ func TestSessionHandler_RefreshSetsCookies(t *testing.T) {
 	e := echo.New()
 	e.HTTPErrorHandler = presenter.HTTPErrorHandler
 
-	cfg := config.LoadAuth()
+	cfg := config.LoadAuth("dev")
 	cfg.Session.RefreshCookieName = "refresh"
 	cfg.Session.CSRFCookieName = "csrf"
 	cfg.Security.CookieSecure = false

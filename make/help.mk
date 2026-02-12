@@ -5,7 +5,7 @@ help:
 	@echo "  make api-log             Run API + tee to /tmp/api.log"
 	@echo "  make check               gofmt + test + vet"
 	@echo "  make audit               check + rules: no >100 lines + 1 pkg/dir (+ makefiles <=100)"
-	@echo "  make sanity              curl /health /v1/health /ga-ada"
+	@echo "  make sanity              curl /health /v1/health /ga-ada"		  
 	@echo ""
 	@echo "Legacy (Postgres/dev tooling):"
 	@echo "  make legacy-dev-up-postgres            Start postgres (docker compose)"

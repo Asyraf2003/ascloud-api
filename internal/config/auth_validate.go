@@ -55,10 +55,27 @@ func (c AuthConfig) Validate() error {
 		return errors.New("invalid cookie config: COOKIE_SAMESITE=none requires COOKIE_SECURE=true")
 	}
 
+	// Origins must be explicit. Cookie+CSRF flow depends on it.
+	if len(c.Security.AllowedOrigins) == 0 {
+		return errors.New("missing env: AUTH_ALLOWED_ORIGINS")
+	}
 	for _, o := range c.Security.AllowedOrigins {
 		u, err := url.Parse(o)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.Path != "" {
 			return fmt.Errorf("invalid AUTH_ALLOWED_ORIGINS entry: %q (must be scheme+host only)", o)
+		}
+	}
+
+	// Guard against obvious COOKIE_DOMAIN foot-guns (empty is allowed = host-only cookie).
+	if d := strings.TrimSpace(c.Security.CookieDomain); d != "" {
+		if strings.Contains(d, "://") {
+			return errors.New("invalid COOKIE_DOMAIN: must be domain only (no scheme)")
+		}
+		if strings.ContainsAny(d, "/") {
+			return errors.New("invalid COOKIE_DOMAIN: must not contain path")
+		}
+		if strings.Contains(d, ":") {
+			return errors.New("invalid COOKIE_DOMAIN: must not contain port")
 		}
 	}
 

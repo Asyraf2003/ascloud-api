@@ -35,7 +35,7 @@ func TestSessionHandler_LogoutClearsCookies(t *testing.T) {
 	e := echo.New()
 	e.HTTPErrorHandler = presenter.HTTPErrorHandler
 
-	cfg := config.LoadAuth()
+	cfg := config.LoadAuth("dev")
 	cfg.Session.RefreshCookieName = "refresh"
 	cfg.Session.CSRFCookieName = "csrf"
 	cfg.Security.CookieSecure = false
@@ -65,7 +65,7 @@ func TestSessionHandler_LogoutClearsCookies(t *testing.T) {
 
 func TestSessionHandler_OptionsNoContent(t *testing.T) {
 	e := echo.New()
-	h := NewSessionHandler(&logoutSpy{}, config.LoadAuth())
+	h := NewSessionHandler(&logoutSpy{}, config.LoadAuth("dev"))
 
 	req := httptest.NewRequest(http.MethodOptions, "/v1/auth/logout", nil)
 	rec := httptest.NewRecorder()

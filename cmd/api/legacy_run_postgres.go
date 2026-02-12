@@ -23,7 +23,9 @@ import (
 )
 
 func run() {
-	addr := env("HTTP_ADDR", ":"+env("HTTP_PORT", "8080"))
+	appCfg := config.Load()
+
+	addr := env("HTTP_ADDR", ":"+env("HTTP_PORT", appCfg.HTTPPort))
 	service := env("SERVICE_NAME", "api")
 	shutdownTimeout := envDuration("SHUTDOWN_TIMEOUT", 10*time.Second)
 
@@ -44,7 +46,7 @@ func run() {
 	defer db.Close()
 	var _ *sql.DB = db
 
-	authCfg := config.LoadAuth()
+	authCfg := config.LoadAuth(appCfg.Env)
 	if err := authCfg.Validate(); err != nil {
 		log.Error("invalid auth config", "err", err)
 		os.Exit(1)
@@ -64,7 +66,7 @@ func run() {
 		os.Exit(1)
 	}
 
-	e := server.New(log, db)
+	e := server.New(log, db, authCfg.Security.AllowedOrigins)
 	router.Register(e)
 
 	go func() {

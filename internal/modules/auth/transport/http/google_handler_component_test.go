@@ -33,7 +33,7 @@ func (f fakeFlow) GoogleCallback(ctx context.Context, in usecase.GoogleCallbackI
 
 func TestGoogleHandler_StartRedirect(t *testing.T) {
 	e := echo.New()
-	h := NewGoogleHandler(fakeFlow{}, config.LoadAuth())
+	h := NewGoogleHandler(fakeFlow{}, config.LoadAuth("dev"))
 	req := httptest.NewRequest(http.MethodGet, "/v1/auth/google/start", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -50,7 +50,7 @@ func TestGoogleHandler_CallbackSetsCookies(t *testing.T) {
 	e := echo.New()
 	e.HTTPErrorHandler = presenter.HTTPErrorHandler
 
-	cfg := config.LoadAuth()
+	cfg := config.LoadAuth("dev")
 	cfg.Session.RefreshCookieName = "refresh"
 	cfg.Session.CSRFCookieName = "csrf"
 	cfg.Security.CookieSecure = false

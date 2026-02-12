@@ -17,20 +17,9 @@ legacy-dev-ps-postgres: prereq-docker
 legacy-dev-logs-postgres: prereq-docker
 	$(COMPOSE) -f $(COMPOSE_FILE) logs -f --tail=200
 
-# ----- Deprecated wrappers (keep old names, but delegate) -----
+# ----- UX Wrappers (Official aliases to legacy) -----
 
-dev-up:
-	@echo "DEPRECATED: gunakan legacy-dev-up-postgres"
-	@$(MAKE) legacy-dev-up-postgres
-
-dev-down:
-	@echo "DEPRECATED: gunakan legacy-dev-down-postgres"
-	@$(MAKE) legacy-dev-down-postgres
-
-dev-ps:
-	@echo "DEPRECATED: gunakan legacy-dev-ps-postgres"
-	@$(MAKE) legacy-dev-ps-postgres
-
-dev-logs:
-	@echo "DEPRECATED: gunakan legacy-dev-logs-postgres"
-	@$(MAKE) legacy-dev-logs-postgres
+dev-up: legacy-dev-up-postgres
+dev-down: legacy-dev-down-postgres
+dev-ps: legacy-dev-ps-postgres
+dev-logs: legacy-dev-logs-postgres
