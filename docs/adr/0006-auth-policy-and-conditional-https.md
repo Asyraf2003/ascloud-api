@@ -27,6 +27,22 @@ Status: Accepted
 - mwAuthCookieStrict memakai policy store (tanpa LoadAuth()).
 - v1 router memasang trust.RequireHTTPS hanya jika policy.requireHTTPS=true.
 
+## Clarifications: HTTPS detection behind proxies
+
+`RequireHTTPS` harus mempertimbangkan deployment di belakang reverse proxy / load balancer.
+
+Policy:
+- Jika server menerima TLS langsung (`req.TLS != nil`) -> dianggap HTTPS.
+- Jika di belakang proxy, HTTPS ditentukan dari forwarded headers yang **trusted** (contoh: `X-Forwarded-Proto: https`).
+- Trust terhadap forwarded headers hanya boleh aktif jika server berada di lingkungan yang mengontrol proxy (mis. ALB/API Gateway), untuk menghindari spoofing dari client.
+
+Checklist implementasi:
+- Pastikan middleware/echo config yang membaca forwarded headers di-enable dengan mode trust yang benar.
+- Tambahkan test (component/integration) untuk:
+  - dev HTTP (CookieSecure=false) -> tidak memaksa HTTPS
+  - prod (CookieSecure=true) + `X-Forwarded-Proto=https` -> lolos
+  - prod (CookieSecure=true) tanpa TLS/forwarded -> ditolak
+
 ## Consequences (Dampak)
 Positif:
 - Policy konsisten per proses (audit-friendly).

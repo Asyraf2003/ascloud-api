@@ -62,6 +62,15 @@ Aturan: setiap query/exec di adapter Postgres wajib melalui:
 
 Sehingga jika usecase membuka transaksi, seluruh operasi store otomatis menggunakan `*sql.Tx` yang sama.
 
+## Scope Note (AWS-first vs Legacy Postgres)
+
+ADR ini mendefinisikan pola transaksi untuk **adapter Postgres (legacy path)**.
+
+Untuk jalur AWS-first (DynamoDB), atomicity dicapai melalui:
+- conditional writes / idempotency keys, atau
+- DynamoDB TransactWriteItems
+dengan tetap menjaga boundary melalui kontrak ports yang setara (tanpa membawa detail vendor ke usecase).
+
 ## Consequences
 
 ### Positive

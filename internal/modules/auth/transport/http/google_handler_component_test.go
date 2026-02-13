@@ -5,6 +5,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -67,8 +68,21 @@ func TestGoogleHandler_CallbackSetsCookies(t *testing.T) {
 	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `"access_token"`) {
 		t.Fatalf("bad response code=%d body=%s", rec.Code, rec.Body.String())
 	}
-	got := rec.Header().Values("Set-Cookie")
-	if len(got) < 2 {
-		t.Fatalf("expected cookies got %v", got)
+
+	cookies := rec.Header().Values("Set-Cookie")
+	if len(cookies) < 2 {
+		t.Fatalf("expected cookies got %v", cookies)
+	}
+
+	var body struct {
+		Auth struct {
+			CSRFToken string `json:"csrf_token"`
+		} `json:"auth"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode json: %v body=%s", err, rec.Body.String())
+	}
+	if body.Auth.CSRFToken != "c" {
+		t.Fatalf("expected csrf_token=c got %q", body.Auth.CSRFToken)
 	}
 }

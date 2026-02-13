@@ -34,6 +34,16 @@ Status: Accepted
   - `middleware.JWTAuth()` tidak menerima parameter, dan mengambil verifier dari `MustAccessTokenVerifier()`
   - Jika verifier belum diset, aplikasi fail-fast saat startup/test (panic/guard) untuk mencegah silent insecure behavior
 
+## Clarifications: Thread-safety & test hygiene
+
+Karena menggunakan global setter, implementasi wajib:
+- Thread-safe read/write (mutex/atomic) untuk verifier storage.
+- Fail-fast jika `SetAccessTokenVerifier` dipanggil lebih dari sekali pada runtime normal (mencegah silent override).
+- Sediakan mekanisme reset **khusus test** (misalnya helper internal dengan build tag test), untuk mencegah kontaminasi antar test package dan mengurangi flakiness saat test paralel.
+
+Rationale:
+- Hidden global state sering membuat CI “kadang merah kadang hijau” tanpa perubahan kode. Itu bukan misteri, itu cuma dosa kecil yang menumpuk.
+
 ## Consequences (Dampak)
 Positif:
 - Kontrak router stabil, perubahan auth/token tidak memicu ripple ke semua callsite.

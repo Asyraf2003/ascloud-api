@@ -5,4 +5,5 @@ type AuthTokens struct {
 	AccessExpiresAt int64  `json:"access_expires_at"`
 	TrustLevel      string `json:"trust_level"`
 	StepUpRequired  bool   `json:"step_up_required"`
+	CSRFToken       string `json:"csrf_token,omitempty"`
 }

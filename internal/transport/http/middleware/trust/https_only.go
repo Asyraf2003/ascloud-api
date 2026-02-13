@@ -3,7 +3,6 @@ package trust
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -21,22 +20,10 @@ func RequireHTTPS() echo.MiddlewareFunc {
 				Add(c, 10, "https")
 				return next(c)
 			}
-			if isProd() {
-				return apperr.New("FORBIDDEN", http.StatusForbidden, "Tidak punya akses.").
-					WithField("reason", "https_required")
-			}
-			Add(c, -10, "http_dev")
-			return next(c)
+			return apperr.New("FORBIDDEN", http.StatusForbidden, "Tidak punya akses.").
+				WithField("reason", "https_required")
 		}
 	}
-}
-
-func isProd() bool {
-	env := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
-	if env == "" {
-		env = "dev"
-	}
-	return env != "dev"
 }
 
 func isHTTPS(c echo.Context) bool {
@@ -52,7 +39,8 @@ func isHTTPS(c echo.Context) bool {
 	var v struct {
 		Scheme string `json:"scheme"`
 	}
-	if err := json.Unmarshal([]byte(c.Request().Header.Get("CF-Visitor")), &v); err == nil && strings.EqualFold(v.Scheme, "https") {
+	if err := json.Unmarshal([]byte(c.Request().Header.Get("CF-Visitor")), &v); err == nil &&
+		strings.EqualFold(v.Scheme, "https") {
 		return true
 	}
 	return false

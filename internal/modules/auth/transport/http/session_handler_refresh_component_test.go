@@ -5,6 +5,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,9 +24,12 @@ type refreshSpy struct{ got string }
 func (s *refreshSpy) Refresh(ctx context.Context, in usecase.RefreshInput) (usecase.RefreshOutput, error) {
 	s.got = in.RefreshToken
 	return usecase.RefreshOutput{
-		AccessToken: "jwt", AccessExp: time.Now().Add(30 * time.Minute),
-		RefreshToken: "r2", RefreshExp: time.Now().Add(24 * time.Hour),
-		CSRFToken: "c2", TrustLevel: "aal1",
+		AccessToken:  "jwt",
+		AccessExp:    time.Now().Add(30 * time.Minute),
+		RefreshToken: "r2",
+		RefreshExp:   time.Now().Add(24 * time.Hour),
+		CSRFToken:    "c2",
+		TrustLevel:   "aal1",
 	}, nil
 }
 func (s *refreshSpy) Logout(ctx context.Context, in usecase.LogoutInput) error { return nil }
@@ -58,5 +62,22 @@ func TestSessionHandler_RefreshSetsCookies(t *testing.T) {
 	}
 	if len(rec.Header().Values("Set-Cookie")) < 2 {
 		t.Fatalf("expected cookies got %v", rec.Header().Values("Set-Cookie"))
+	}
+
+	var got struct {
+		Auth struct {
+			CSRFToken string `json:"csrf_token"`
+		} `json:"auth"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode json: %v body=%s", err, rec.Body.String())
+	}
+	if got.Auth.CSRFToken != "c2" {
+		t.Fatalf("expected csrf_token=c2 got %q", got.Auth.CSRFToken)
+	}
+
+	cookies := strings.Join(rec.Header().Values("Set-Cookie"), "; ")
+	if !strings.Contains(cookies, "refresh=") || !strings.Contains(cookies, "csrf=") {
+		t.Fatalf("expected refresh+csrf cookies got %v", rec.Header().Values("Set-Cookie"))
 	}
 }

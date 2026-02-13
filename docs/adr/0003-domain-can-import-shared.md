@@ -35,6 +35,15 @@ Memilih opsi (2):
 
 Enforcement dilakukan lewat `scripts/audit_boundaries.sh`.
 
+## Enforcement Guidance
+
+Untuk menjaga `internal/shared/*` tetap pure:
+- `internal/shared/*` dilarang import:
+  - `internal/platform/*`
+  - `internal/transport/http/*`
+  - third-party IO/network/db client libraries
+- Disarankan membuat allowlist package shared yang boleh dipakai domain (contoh: `internal/shared/errors`, `internal/shared/clock`, `internal/shared/validate`) agar review lebih mudah.
+
 ## Consequences (Dampak)
 Positif:
 - Domain bisa menyimpan semantic error/utility tanpa bocor ke usecase/transport.

@@ -56,6 +56,7 @@ func (h *GoogleHandler) Callback(c echo.Context) error {
 		Auth: presenter.AuthTokens{
 			AccessToken: out.AccessToken, AccessExpiresAt: out.AccessExp.Unix(),
 			TrustLevel: out.TrustLevel, StepUpRequired: out.StepUpRequired,
+			CSRFToken: out.CSRFToken,
 		},
 		Meta: &presenter.Meta{},
 	})
