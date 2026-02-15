@@ -1,4 +1,2 @@
-// Package domain is a placeholder package.
-//
-// Add real types/functions when this area is needed.
+// Package domain defines core hosting concepts (site, upload, release) used by the hosting module.
 package domain

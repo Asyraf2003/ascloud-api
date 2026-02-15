@@ -1,4 +1,2 @@
-// Package sqs is a placeholder package.
-//
-// Add real types/functions when this area is needed.
+// Package sqs provides AWS SQS client construction for queues.
 package sqs

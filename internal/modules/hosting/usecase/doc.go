@@ -1,4 +1,2 @@
-// Package usecase is a placeholder package.
-//
-// Add real types/functions when this area is needed.
+// Package usecase contains hosting workflows (upload initiation/completion, deploy enqueue, etc.).
 package usecase

@@ -1,4 +1,2 @@
-// Package s3 is a placeholder package.
-//
-// Add real types/functions when this area is needed.
+// Package s3 provides AWS S3 client construction for object storage.
 package s3

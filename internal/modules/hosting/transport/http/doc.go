@@ -1,4 +1,2 @@
-// Package http is a placeholder package.
-//
-// Add real types/functions when this area is needed.
+// Package http exposes hosting usecases over HTTP.
 package http
