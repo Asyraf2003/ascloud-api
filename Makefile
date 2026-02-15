@@ -21,3 +21,4 @@ include make/prereq.mk
 include make/sanity.mk
 include make/sec.mk
 include make/run.mk
+include make/ddb.mk

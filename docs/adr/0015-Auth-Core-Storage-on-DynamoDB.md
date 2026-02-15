@@ -1,7 +1,7 @@
 # ADR 0015: Step 3 — Default API Runner + Auth Core Storage on DynamoDB (AWS-first)
 
-Date: 2026-02-13  
 Status: Accepted
+Tanggal: 2026-02-13 22:16 WITA
 
 ## Context
 - Default `cmd/api` sebelumnya `panic(...)` kecuali dijalankan dengan `-tags=legacy_postgres`.
