@@ -11,7 +11,7 @@ git add .
 if git commit -m "Update $count"; then
     echo "Berhasil commit: Update $count"
     
-    # 4. Push ke remote origin branch main
+    # 4. Push ke remote origin branch mainc
     git push origin main
 else
     echo "Gagal: Tidak ada perubahan untuk di-commit atau terjadi error."
