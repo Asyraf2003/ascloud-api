@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
+
 	"example.com/your-api/internal/modules/hosting/domain"
 	"example.com/your-api/internal/modules/hosting/ports"
 )
@@ -31,17 +33,20 @@ func (s *Service) CompleteUpload(ctx context.Context, siteID domain.SiteID, uplo
 		return CompleteUploadOutput{}, err
 	}
 	if s.cfg.MaxUploadBytes > 0 && size > s.cfg.MaxUploadBytes {
-		_ = s.up.UpdateStatusAndSize(ctx, uploadID, domain.UploadStatusFailed, size)
+		_ = s.up.UpdateStatusSizeAndReleaseID(ctx, uploadID, domain.UploadStatusFailed, size, "")
 		return CompleteUploadOutput{}, domain.ErrUploadTooLarge
 	}
 
-	if err := s.up.UpdateStatusAndSize(ctx, uploadID, domain.UploadStatusQueued, size); err != nil {
+	rid := domain.ReleaseID(uuid.NewString())
+
+	if err := s.up.UpdateStatusSizeAndReleaseID(ctx, uploadID, domain.UploadStatusQueued, size, rid); err != nil {
 		return CompleteUploadOutput{}, err
 	}
 
 	msg := ports.DeployMessage{
 		SiteID:       siteID,
 		UploadID:     uploadID,
+		ReleaseID:    rid,
 		ObjectKey:    u.ObjectKey,
 		SizeBytes:    size,
 		QueuedAtUnix: time.Now().UTC().Unix(),

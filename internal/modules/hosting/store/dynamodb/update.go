@@ -36,18 +36,19 @@ func (s *UploadStore) UpdateStatus(ctx context.Context, id domain.UploadID, stat
 	return err
 }
 
-func (s *UploadStore) UpdateStatusAndSize(ctx context.Context, id domain.UploadID, status domain.UploadStatus, sizeBytes int64) error {
+func (s *UploadStore) UpdateStatusSizeAndReleaseID(ctx context.Context, id domain.UploadID, status domain.UploadStatus, sizeBytes int64, releaseID domain.ReleaseID) error {
 	_, err := s.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName:           aws.String(s.table),
 		Key:                 map[string]types.AttributeValue{"pk": avS(uplPK(id.String()))},
 		ConditionExpression: aws.String("attribute_exists(pk)"),
-		UpdateExpression:    aws.String("SET #st = :s, size_bytes = :b, updated_at = :t"),
+		UpdateExpression:    aws.String("SET #st = :s, size_bytes = :b, release_id = :r, updated_at = :t"),
 		ExpressionAttributeNames: map[string]string{
 			"#st": "status",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":s": avS(string(status)),
 			":b": avN(sizeBytes),
+			":r": avS(releaseID.String()),
 			":t": avN(time.Now().UTC().Unix()),
 		},
 	})

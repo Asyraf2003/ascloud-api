@@ -15,7 +15,7 @@ type UploadStore interface {
 	Put(ctx context.Context, u domain.Upload) error
 	Get(ctx context.Context, id domain.UploadID) (domain.Upload, error)
 	UpdateStatus(ctx context.Context, id domain.UploadID, status domain.UploadStatus) error
-	UpdateStatusAndSize(ctx context.Context, id domain.UploadID, status domain.UploadStatus, sizeBytes int64) error
+	UpdateStatusSizeAndReleaseID(ctx context.Context, id domain.UploadID, status domain.UploadStatus, sizeBytes int64, releaseID domain.ReleaseID) error
 }
 
 type ObjectStore interface {
@@ -24,11 +24,12 @@ type ObjectStore interface {
 }
 
 type DeployMessage struct {
-	SiteID       domain.SiteID   `json:"site_id"`
-	UploadID     domain.UploadID `json:"upload_id"`
-	ObjectKey    string          `json:"object_key"`
-	SizeBytes    int64           `json:"size_bytes"`
-	QueuedAtUnix int64           `json:"queued_at_unix"`
+	SiteID       domain.SiteID    `json:"site_id"`
+	UploadID     domain.UploadID  `json:"upload_id"`
+	ReleaseID    domain.ReleaseID `json:"release_id"`
+	ObjectKey    string           `json:"object_key"`
+	SizeBytes    int64            `json:"size_bytes"`
+	QueuedAtUnix int64            `json:"queued_at_unix"`
 }
 
 type DeployQueue interface {

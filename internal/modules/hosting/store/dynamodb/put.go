@@ -20,6 +20,7 @@ func (s *UploadStore) Put(ctx context.Context, u domain.Upload) error {
 		"pk":         avS(uplPK(u.ID.String())),
 		"upload_id":  avS(u.ID.String()),
 		"site_id":    avS(u.SiteID.String()),
+		"release_id": avS(u.ReleaseID.String()),
 		"object_key": avS(u.ObjectKey),
 		"size_bytes": avN(u.SizeBytes),
 		"status":     avS(string(u.Status)),
