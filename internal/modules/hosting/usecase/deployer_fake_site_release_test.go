@@ -12,7 +12,9 @@ type fakeSiteStore struct {
 	lastRelease domain.ReleaseID
 }
 
-func (f *fakeSiteStore) Get(context.Context, domain.SiteID) (domain.Site, error) { return domain.Site{}, nil }
+func (f *fakeSiteStore) Get(context.Context, domain.SiteID) (domain.Site, error) {
+	return domain.Site{}, nil
+}
 func (f *fakeSiteStore) UpdateCurrentRelease(_ context.Context, id domain.SiteID, rid domain.ReleaseID) error {
 	f.lastSite, f.lastRelease = id, rid
 	return nil

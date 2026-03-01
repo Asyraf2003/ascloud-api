@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"example.com/your-api/internal/modules/hosting/domain"
 	"example.com/your-api/internal/modules/hosting/ports"
@@ -11,8 +10,8 @@ import (
 )
 
 func (d *Deployer) Deploy(ctx context.Context, msg ports.DeployMessage) error {
-	if msg.SiteID == "" || msg.UploadID == "" || msg.ReleaseID == "" || msg.ObjectKey == "" {
-		return apperr.New("hosting.bad_message", 0, "")
+	if err := validateDeployMessage(msg); err != nil {
+		return err
 	}
 
 	ctx2, cancel := context.WithTimeout(ctx, d.cfg.DeployTimeout)
@@ -20,20 +19,19 @@ func (d *Deployer) Deploy(ctx context.Context, msg ports.DeployMessage) error {
 
 	d.initRelease(ctx2, msg)
 
-	u, err := d.up.Get(ctx2, msg.UploadID)
+	u, err := d.loadUploadForDeploy(ctx2, msg)
 	if err != nil {
-		return apperr.Wrap(err, "hosting.upload_not_found", 0, "")
-	}
-	if u.SiteID != msg.SiteID {
-		return d.permanentFail(ctx2, msg, "hosting.site_mismatch")
+		return err
 	}
 	if u.Status == domain.UploadStatusDeployed {
 		return nil
 	}
-	if u.Status != domain.UploadStatusQueued {
-		return d.permanentFail(ctx2, msg, "hosting.upload_not_queued")
+
+	size := msg.SizeBytes
+	if size <= 0 {
+		size = u.SizeBytes
 	}
-	if d.cfg.MaxZipBytes > 0 && msg.SizeBytes > d.cfg.MaxZipBytes {
+	if d.cfg.MaxZipBytes > 0 && size > d.cfg.MaxZipBytes {
 		return d.permanentFail(ctx2, msg, "hosting.zip_too_large")
 	}
 
@@ -58,18 +56,17 @@ func (d *Deployer) Deploy(ctx context.Context, msg ports.DeployMessage) error {
 		return apperr.Wrap(err, "hosting.s3_put_failed", 0, "")
 	}
 
-	nowSize := res.TotalBytes
-	if err := d.rel.UpdateStatus(ctx2, msg.ReleaseID, domain.ReleaseStatusSuccess, nowSize, ""); err != nil {
-		return apperr.Wrap(err, "hosting.ddb_release_update_failed", 0, "")
-	}
-	if err := d.sites.UpdateCurrentRelease(ctx2, msg.SiteID, msg.ReleaseID); err != nil {
-		return apperr.Wrap(err, "hosting.ddb_site_update_failed", 0, "")
-	}
-	if err := d.up.UpdateStatusSizeAndReleaseID(ctx2, msg.UploadID, domain.UploadStatusDeployed, nowSize, msg.ReleaseID); err != nil {
-		return apperr.Wrap(err, "hosting.ddb_upload_update_failed", 0, "")
+	if err := d.markSuccess(ctx2, msg, res.TotalBytes); err != nil {
+		return err
 	}
 
 	_ = d.obj.Delete(ctx2, msg.ObjectKey)
-	_ = time.Now() // keep imports stable under gofmt if you remove time usage later
+	return nil
+}
+
+func validateDeployMessage(msg ports.DeployMessage) error {
+	if msg.SiteID == "" || msg.UploadID == "" || msg.ReleaseID == "" || msg.ObjectKey == "" {
+		return apperr.New("hosting.bad_message", 0, "")
+	}
 	return nil
 }
