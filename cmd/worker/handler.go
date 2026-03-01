@@ -22,20 +22,23 @@ type sqsHandler struct {
 }
 
 func newSQSHandler(log *slog.Logger, dep deployer) *sqsHandler {
+	if log == nil {
+		log = slog.Default()
+	}
 	return &sqsHandler{log: log, dep: dep}
 }
 
-func (h *sqsHandler) Handle(ctx context.Context, evt events.SQSEvent) (events.SQSBatchResponse, error) {
+func (h *sqsHandler) Handle(ctx context.Context, evt events.SQSEvent) (sqsBatchResponse, error) {
 	reqID := lambdaRequestID(ctx)
 	h.log.Info("sqs_batch_start", "request_id", reqID, "records", len(evt.Records))
 
-	var resp events.SQSBatchResponse
+	var resp sqsBatchResponse
 	for _, r := range evt.Records {
-		fail, code := h.handleRecord(ctx, r)
-		if !fail {
+		retry, code := h.handleRecord(ctx, r)
+		if !retry {
 			continue
 		}
-		resp.BatchItemFailures = append(resp.BatchItemFailures, events.SQSBatchItemFailure{
+		resp.BatchItemFailures = append(resp.BatchItemFailures, sqsBatchItemFailure{
 			ItemIdentifier: r.MessageId,
 		})
 		h.log.Error("sqs_item_failed", "request_id", reqID, "msg_id", r.MessageId, "code", code)
@@ -70,21 +73,4 @@ func lambdaRequestID(ctx context.Context) string {
 		return ""
 	}
 	return lc.AwsRequestID
-}
-
-func isPermanent(code string) bool {
-	switch code {
-	case "hosting.bad_message",
-		"hosting.site_mismatch",
-		"hosting.upload_not_queued",
-		"hosting.zip_too_large",
-		"hosting.zip_slip",
-		"hosting.zip_symlink",
-		"hosting.zip_too_many_files",
-		"hosting.zip_too_deep",
-		"hosting.extract_over_quota":
-		return true
-	default:
-		return false
-	}
 }
