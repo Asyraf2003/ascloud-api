@@ -7,4 +7,7 @@ var (
 	ErrUploadTooLarge      = errors.New("upload too large")
 	ErrUploadSiteMismatch  = errors.New("upload site mismatch")
 	ErrUploadAlreadyQueued = errors.New("upload already queued")
+
+	ErrSiteNotFound    = errors.New("site not found")
+	ErrReleaseNotFound = errors.New("release not found")
 )

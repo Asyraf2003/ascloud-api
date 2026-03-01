@@ -9,6 +9,7 @@ import (
 
 type SiteStore interface {
 	Get(ctx context.Context, id domain.SiteID) (domain.Site, error)
+	UpdateCurrentRelease(ctx context.Context, id domain.SiteID, releaseID domain.ReleaseID) error
 }
 
 type UploadStore interface {
@@ -16,6 +17,11 @@ type UploadStore interface {
 	Get(ctx context.Context, id domain.UploadID) (domain.Upload, error)
 	UpdateStatus(ctx context.Context, id domain.UploadID, status domain.UploadStatus) error
 	UpdateStatusSizeAndReleaseID(ctx context.Context, id domain.UploadID, status domain.UploadStatus, sizeBytes int64, releaseID domain.ReleaseID) error
+}
+
+type ReleaseStore interface {
+	Put(ctx context.Context, r domain.Release) error
+	UpdateStatus(ctx context.Context, id domain.ReleaseID, status domain.ReleaseStatus, sizeBytes int64, errorCode string) error
 }
 
 type ObjectStore interface {
