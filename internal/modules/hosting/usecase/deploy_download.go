@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,8 @@ import (
 
 	"example.com/your-api/internal/modules/hosting/domain"
 )
+
+var ErrZipTooLarge = errors.New("zip too large")
 
 func (d *Deployer) downloadZip(ctx context.Context, objectKey string, uploadID domain.UploadID, max int64) (string, error) {
 	rc, err := d.obj.Get(ctx, objectKey)
@@ -32,16 +35,21 @@ func (d *Deployer) downloadZip(ctx context.Context, objectKey string, uploadID d
 }
 
 func copyLimited(ctx context.Context, dst io.Writer, src io.Reader, max int64) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if max <= 0 {
 		_, err := io.Copy(dst, src)
 		return err
 	}
-	_, err := io.CopyN(dst, src, max+1)
-	if err == io.EOF {
-		return nil
-	}
+
+	lr := io.LimitReader(src, max+1)
+	n, err := io.Copy(dst, lr)
 	if err != nil {
 		return err
 	}
-	return io.ErrUnexpectedEOF
+	if n > max {
+		return ErrZipTooLarge
+	}
+	return nil
 }
