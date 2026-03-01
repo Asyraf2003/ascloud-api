@@ -22,4 +22,4 @@ Dokumen ini adalah pintu utama untuk memahami sistem. Mulai dari sini.
 
 ## Notes & Archive
 - Notes: `./notes/`
-- Archive: `./archive/`
+- Archive: `./archive/`v
