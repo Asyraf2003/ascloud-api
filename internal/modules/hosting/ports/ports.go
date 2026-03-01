@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"example.com/your-api/internal/modules/hosting/domain"
@@ -27,6 +28,10 @@ type ReleaseStore interface {
 type ObjectStore interface {
 	PresignPutZip(ctx context.Context, objectKey string, maxBytes int64, expires time.Duration) (url string, err error)
 	Head(ctx context.Context, objectKey string) (sizeBytes int64, err error)
+
+	Get(ctx context.Context, objectKey string) (body io.ReadCloser, err error)
+	Put(ctx context.Context, objectKey string, body io.Reader, contentType string, cacheControl string) error
+	Delete(ctx context.Context, objectKey string) error
 }
 
 type DeployMessage struct {
