@@ -11,4 +11,5 @@ var (
 	ErrSiteNotFound      = errors.New("site not found")
 	ErrReleaseNotFound   = errors.New("release not found")
 	ErrSiteAlreadyExists = errors.New("hosting site already exists")
+	ErrSiteInvalid       = errors.New("hosting site invalid")
 )

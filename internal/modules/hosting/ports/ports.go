@@ -25,7 +25,13 @@ type UploadStore interface {
 
 type ReleaseStore interface {
 	Put(ctx context.Context, r domain.Release) error
+	Get(ctx context.Context, id domain.ReleaseID) (domain.Release, error)
+	ListBySite(ctx context.Context, siteID domain.SiteID, limit int) ([]domain.Release, error)
 	UpdateStatus(ctx context.Context, id domain.ReleaseID, status domain.ReleaseStatus, sizeBytes int64, errorCode string) error
+}
+
+type EdgeStore interface {
+	PutHostMapping(ctx context.Context, host string, siteID domain.SiteID, currentReleaseID domain.ReleaseID, suspended bool) error
 }
 
 type ObjectStore interface {
