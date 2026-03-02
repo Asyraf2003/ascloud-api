@@ -8,6 +8,7 @@ var (
 	ErrUploadSiteMismatch  = errors.New("upload site mismatch")
 	ErrUploadAlreadyQueued = errors.New("upload already queued")
 
-	ErrSiteNotFound    = errors.New("site not found")
-	ErrReleaseNotFound = errors.New("release not found")
+	ErrSiteNotFound      = errors.New("site not found")
+	ErrReleaseNotFound   = errors.New("release not found")
+	ErrSiteAlreadyExists = errors.New("hosting site already exists")
 )

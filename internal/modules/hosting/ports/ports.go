@@ -9,7 +9,10 @@ import (
 )
 
 type SiteStore interface {
+	Put(ctx context.Context, s domain.Site) error
 	Get(ctx context.Context, id domain.SiteID) (domain.Site, error)
+	List(ctx context.Context, limit int) ([]domain.Site, error)
+
 	UpdateCurrentRelease(ctx context.Context, id domain.SiteID, releaseID domain.ReleaseID) error
 }
 

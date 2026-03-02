@@ -12,8 +12,15 @@ import (
 	"syscall"
 	"time"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cloudfrontkeyvaluestore"
+	s3svc "github.com/aws/aws-sdk-go-v2/service/s3"
+	sqssvc "github.com/aws/aws-sdk-go-v2/service/sqs"
+
 	"example.com/your-api/internal/config"
-	"example.com/your-api/internal/modules/auth/wire"
+	authwire "example.com/your-api/internal/modules/auth/wire"
+	hostinghttp "example.com/your-api/internal/modules/hosting/transport/http"
+	hostingwire "example.com/your-api/internal/modules/hosting/wire"
 	dbplat "example.com/your-api/internal/platform/datastore/dynamodb"
 	jwtp "example.com/your-api/internal/platform/token/jwt"
 	"example.com/your-api/internal/transport/http/router"
@@ -48,16 +55,47 @@ func run() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	ddb, err := dbplat.New(ctx, dbplat.ConfigFromEnv("ap-southeast-3"))
+
+	region := env("AWS_REGION", "ap-southeast-3")
+
+	ddb, err := dbplat.New(ctx, dbplat.ConfigFromEnv(region))
 	if err != nil {
 		log.Error("dynamodb init failed", "err", err)
 		os.Exit(1)
 	}
 
-	if err := wire.WireAuthGoogle(ddb, authCfg); err != nil {
+	if err := authwire.WireAuthGoogle(ddb, authCfg); err != nil {
 		log.Error("wire auth google failed", "err", err)
 		os.Exit(1)
 	}
+
+	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region))
+	if err != nil {
+		log.Error("aws config load failed", "err", err)
+		os.Exit(1)
+	}
+
+	s3 := s3svc.NewFromConfig(awsCfg)
+	sqs := sqssvc.NewFromConfig(awsCfg)
+	kvs := cloudfrontkeyvaluestore.NewFromConfig(awsCfg)
+
+	// Step 4: Upload pipeline (presign + head + enqueue)
+	hostingSvc, err := hostingwire.WireHostingUploadPipeline(ddb, s3, sqs)
+	if err != nil {
+		log.Error("wire hosting upload pipeline failed", "err", err)
+		os.Exit(1)
+	}
+	hostinghttp.SetUploadHandler(hostinghttp.NewUploadHandler(hostingSvc))
+
+	// Step 7: Dashboard control-plane (sites + releases + rollback via KVS)
+	dash, err := hostingwire.WireHostingDashboard(ddb, kvs)
+	if err != nil {
+		log.Error("wire hosting dashboard failed", "err", err)
+		os.Exit(1)
+	}
+	hostinghttp.SetSiteHandler(hostinghttp.NewSiteHandler(dash))
+	hostinghttp.SetReleaseHandler(hostinghttp.NewReleaseHandler(dash))
+	hostinghttp.SetRollbackHandler(hostinghttp.NewRollbackHandler(dash))
 
 	e := server.New(log, ddb, authCfg.Security.AllowedOrigins)
 	router.Register(e)

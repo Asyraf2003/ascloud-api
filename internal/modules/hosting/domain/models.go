@@ -6,7 +6,9 @@ type Site struct {
 	ID             SiteID
 	CreatedAt      time.Time
 	Suspended      bool
-	CurrentRelease ReleaseID // empty means none yet
+	CurrentRelease ReleaseID
+	Host           string
+	UpdatedAt      time.Time
 }
 
 type UploadStatus string
