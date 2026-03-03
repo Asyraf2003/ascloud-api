@@ -3,11 +3,8 @@ package v1
 import (
 	"time"
 
-	"github.com/labstack/echo/v4"
-
 	"example.com/your-api/internal/transport/http/middleware"
 	"example.com/your-api/internal/transport/http/middleware/trust"
-
 	accountPkg "example.com/your-api/internal/transport/http/router/v1/account"
 	authPkg "example.com/your-api/internal/transport/http/router/v1/auth"
 	billingPkg "example.com/your-api/internal/transport/http/router/v1/billing"
@@ -16,14 +13,18 @@ import (
 	hostingPkg "example.com/your-api/internal/transport/http/router/v1/hosting"
 	mePkg "example.com/your-api/internal/transport/http/router/v1/me"
 	trustPkg "example.com/your-api/internal/transport/http/router/v1/trust"
+
+	"github.com/labstack/echo/v4"
 )
 
 func Register(e *echo.Echo) {
 	base := e.Group("/v1")
 
+	// --- Public Routes ---
 	pub := base.Group("")
 	healthPkg.Register(pub)
 
+	// --- Auth Routes ---
 	authG := base.Group("")
 	authG.Use(trust.Init("auth", 50))
 	if authPkg.RequireHTTPS() {
@@ -33,20 +34,36 @@ func Register(e *echo.Echo) {
 	authG.Use(trust.RateLimit("auth_group", 120, time.Minute))
 	authPkg.Register(authG)
 
-	protected := base.Group("")
-	protected.Use(trust.Init("api", 50))
+	// --- Protected Base (Common Middlewares) ---
+	protectedBase := base.Group("")
+	protectedBase.Use(trust.Init("api", 50))
 	if authPkg.RequireHTTPS() {
-		protected.Use(trust.RequireHTTPS())
+		protectedBase.Use(trust.RequireHTTPS())
 	}
-	protected.Use(trust.UserAgentScore())
-	protected.Use(middleware.JWTAuth())
-	protected.Use(trust.ScoreFromAAL())
-	protected.Use(trust.Enforce(trust.Thresholds{Allow: 75, StepUp: 50}))
+	protectedBase.Use(trust.UserAgentScore())
+	protectedBase.Use(middleware.JWTAuth())
+	protectedBase.Use(trust.ScoreFromAAL())
 
-	mePkg.Register(protected)
-	accountPkg.Register(protected)
-	hostingPkg.Register(protected)
-	domainMgmtPkg.Register(protected)
-	trustPkg.Register(protected)
-	billingPkg.Register(protected)
+	// --- Low-Risk Routes (AAL1 + MVP flows) ---
+	low := protectedBase.Group("")
+	mePkg.Register(low)
+	hostingPkg.Register(low)
+
+	// --- Default Protected Routes (Stricter) ---
+	def := protectedBase.Group("")
+	def.Use(trust.Enforce(trust.Thresholds{
+		Allow:  75,
+		StepUp: 50,
+	}))
+	accountPkg.Register(def)
+	trustPkg.Register(def)
+
+	// --- High-Risk Routes (Billing/Domains) ---
+	high := protectedBase.Group("")
+	high.Use(trust.Enforce(trust.Thresholds{
+		Allow:  75,
+		StepUp: 50,
+	}))
+	domainMgmtPkg.Register(high)
+	billingPkg.Register(high)
 }
