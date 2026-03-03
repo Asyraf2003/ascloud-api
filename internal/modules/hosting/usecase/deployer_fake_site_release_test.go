@@ -1,6 +1,6 @@
+// TODO justify: >100 lines sementara; akan dipecah saat milestone 9.
 
-."
-".package usecase
+package usecase
 
 import (
 	"context"

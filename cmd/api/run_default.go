@@ -1,9 +1,9 @@
 //go:build !legacy_postgres
 // +build !legacy_postgres
-."
-".."
 
-".package main
+// TODO justify: >100 lines sementara; akan dipecah saat milestone 9.
+
+package main
 
 import (
 	"context"

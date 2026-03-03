@@ -1,6 +1,6 @@
+// TODO justify: >100 lines sementara; akan dipecah saat milestone 9.
 
-."
-".package http
+package http
 
 import (
 	"errors"
