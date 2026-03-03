@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 
+	"example.com/your-api/internal/shared/requestid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -14,8 +15,15 @@ func RequestID() echo.MiddlewareFunc {
 			if rid == "" {
 				rid = newRequestID()
 			}
+
+			// Ensure request/response headers are set.
 			c.Request().Header.Set(echo.HeaderXRequestID, rid)
 			c.Response().Header().Set(echo.HeaderXRequestID, rid)
+
+			// Also propagate via context for usecases/ports.
+			ctx := requestid.With(c.Request().Context(), rid)
+			c.SetRequest(c.Request().WithContext(ctx))
+
 			return next(c)
 		}
 	}

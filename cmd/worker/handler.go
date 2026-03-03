@@ -41,8 +41,7 @@ func (h *sqsHandler) Handle(ctx context.Context, evt events.SQSEvent) (sqsBatchR
 		resp.BatchItemFailures = append(resp.BatchItemFailures, sqsBatchItemFailure{
 			ItemIdentifier: r.MessageId,
 		})
-		h.log.Error("sqs_item_failed", "request_id", reqID, "msg_id", r.MessageId, "code", code)
-	}
+	}h.log.Info("sqs_batch_start", "lambda_request_id", lambdaID, "records", len(evt.Records))
 	return resp, nil
 }
 

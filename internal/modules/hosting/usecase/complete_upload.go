@@ -8,6 +8,7 @@ import (
 
 	"example.com/your-api/internal/modules/hosting/domain"
 	"example.com/your-api/internal/modules/hosting/ports"
+	"example.com/your-api/internal/shared/requestid"
 )
 
 type CompleteUploadOutput struct {
@@ -43,7 +44,10 @@ func (s *Service) CompleteUpload(ctx context.Context, siteID domain.SiteID, uplo
 		return CompleteUploadOutput{}, err
 	}
 
+	reqID, _ := requestid.From(ctx)
+
 	msg := ports.DeployMessage{
+		RequestID:    reqID,
 		SiteID:       siteID,
 		UploadID:     uploadID,
 		ReleaseID:    rid,
