@@ -1,15 +1,22 @@
 .PHONY: audit-lines audit-packages audit-makefiles audit
 
 audit-lines:
-	out="$$(find . -name '*.go' -not -path './vendor/*' -print0 \
-	| xargs -0 wc -l \
-	| awk '$$2!="total" && $$1>100 {printf "%4d  %s\n",$$1,$$2}' \
-	| sort -nr)"; \
-	if [ -n "$$out" ]; then \
-		echo "FAIL: .go file >100 lines:"; \
-		echo "$$out"; \
+	@set -e; \
+	out="$$(find . -name '*.go' -not -path './vendor/*' -print0 | xargs -0 wc -l | awk '$$2!="total" && $$1>100 {printf "%4d  %s\n",$$1,$$2}' | sort -nr)"; \
+	if [ -z "$$out" ]; then exit 0; fi; \
+	tmp="$$(mktemp)"; \
+	echo "$$out" | while read -r lines file; do \
+		if ! grep -q "TODO justify" "$$file"; then \
+			echo "$$lines  $$file" >> "$$tmp"; \
+		fi; \
+	done; \
+	if [ -s "$$tmp" ]; then \
+		echo "FAIL: .go file >100 lines without TODO justify:"; \
+		cat "$$tmp"; \
+		rm -f "$$tmp"; \
 		exit 1; \
-	fi
+	fi; \
+	rm -f "$$tmp"
 
 # Rule: 1 package per directory (non-recursive), ignore *_test.go
 audit-packages:

@@ -1,4 +1,6 @@
-package http
+
+."
+".package http
 
 import (
 	"errors"
