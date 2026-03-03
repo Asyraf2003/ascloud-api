@@ -44,13 +44,13 @@ type ObjectStore interface {
 }
 
 type DeployMessage struct {
-	RequestID   string           `json:"request_id,omitempty"`
-	SiteID      domain.SiteID    `json:"site_id"`
-	UploadID    domain.UploadID  `json:"upload_id"`
-	ReleaseID   domain.ReleaseID `json:"release_id"`
-	ObjectKey   string           `json:"object_key"`
-	SizeBytes   int64            `json:"size_bytes"`
-	QueuedAtUnix int64           `json:"queued_at_unix"`
+	RequestID    string           `json:"request_id,omitempty"`
+	SiteID       domain.SiteID    `json:"site_id"`
+	UploadID     domain.UploadID  `json:"upload_id"`
+	ReleaseID    domain.ReleaseID `json:"release_id"`
+	ObjectKey    string           `json:"object_key"`
+	SizeBytes    int64            `json:"size_bytes"`
+	QueuedAtUnix int64            `json:"queued_at_unix"`
 }
 
 type DeployQueue interface {
