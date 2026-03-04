@@ -14,13 +14,13 @@ func (d *Deployer) loadUploadForDeploy(ctx context.Context, msg ports.DeployMess
 		return domain.Upload{}, apperr.Wrap(err, "hosting.upload_not_found", 0, "")
 	}
 	if u.SiteID != msg.SiteID {
-		return domain.Upload{}, d.permanentFail(ctx, msg, "hosting.site_mismatch")
+		return domain.Upload{}, d.permanentFail(ctx, msg, nil, "hosting.site_mismatch")
 	}
 	if u.Status == domain.UploadStatusDeployed {
 		return u, nil
 	}
 	if u.Status != domain.UploadStatusQueued {
-		return domain.Upload{}, d.permanentFail(ctx, msg, "hosting.upload_not_queued")
+		return domain.Upload{}, d.permanentFail(ctx, msg, nil, "hosting.upload_not_queued")
 	}
 	return u, nil
 }
