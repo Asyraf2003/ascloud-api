@@ -44,6 +44,11 @@ func (s *ReleaseStore) Put(ctx context.Context, r domain.Release) error {
 		"updated_at": avN(r.UpdatedAt.UTC().Unix()),
 	}
 
+	// store only when non-empty (older items won't have the attribute)
+	if len(r.Violations) > 0 {
+		item["violations"] = avSS(r.Violations)
+	}
+
 	_, err := s.db.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(s.table),
 		Item:                item,
@@ -57,21 +62,36 @@ func (s *ReleaseStore) Put(ctx context.Context, r domain.Release) error {
 	return err
 }
 
-func (s *ReleaseStore) UpdateStatus(ctx context.Context, id domain.ReleaseID, status domain.ReleaseStatus, sizeBytes int64, errorCode string) error {
+func (s *ReleaseStore) UpdateStatus(ctx context.Context, id domain.ReleaseID, status domain.ReleaseStatus, sizeBytes int64, errorCode string, violations []string) error {
+	updateExpr := "SET #st = :s, size_bytes = :b, error_code = :e, updated_at = :t"
+
+	exprNames := map[string]string{
+		"#st": "status",
+	}
+	exprValues := map[string]types.AttributeValue{
+		":s": avS(string(status)),
+		":b": avN(sizeBytes),
+		":e": avS(errorCode),
+		":t": avN(time.Now().UTC().Unix()),
+	}
+
+	// violations:
+	// - nil  => do not touch
+	// - []{} => set empty list (explicit clear)
+	if violations != nil {
+		updateExpr += ", violations = :v"
+		exprValues[":v"] = avSS(violations)
+	}
+
 	_, err := s.db.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName:           aws.String(s.table),
 		Key:                 map[string]types.AttributeValue{"pk": avS(relPK(id.String()))},
 		ConditionExpression: aws.String("attribute_exists(pk)"),
-		UpdateExpression:    aws.String("SET #st = :s, size_bytes = :b, error_code = :e, updated_at = :t"),
+		UpdateExpression:    aws.String(updateExpr),
 		ExpressionAttributeNames: map[string]string{
-			"#st": "status",
+			"#st": exprNames["#st"],
 		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":s": avS(string(status)),
-			":b": avN(sizeBytes),
-			":e": avS(errorCode),
-			":t": avN(time.Now().UTC().Unix()),
-		},
+		ExpressionAttributeValues: exprValues,
 	})
 	if err == nil {
 		return nil
@@ -125,14 +145,52 @@ func (s *ReleaseStore) ListBySite(ctx context.Context, siteID domain.SiteID, lim
 
 func decodeRelease(m map[string]types.AttributeValue) domain.Release {
 	return domain.Release{
-		ID:        domain.ReleaseID(getS(m, "release_id")),
-		SiteID:    domain.SiteID(getS(m, "site_id")),
-		Status:    domain.ReleaseStatus(getS(m, "status")),
-		SizeBytes: getN(m, "size_bytes"),
-		ErrorCode: getS(m, "error_code"),
-		CreatedAt: time.Unix(getN(m, "created_at"), 0).UTC(),
-		UpdatedAt: time.Unix(getN(m, "updated_at"), 0).UTC(),
+		ID:         domain.ReleaseID(getS(m, "release_id")),
+		SiteID:     domain.SiteID(getS(m, "site_id")),
+		Status:     domain.ReleaseStatus(getS(m, "status")),
+		SizeBytes:  getN(m, "size_bytes"),
+		ErrorCode:  getS(m, "error_code"),
+		Violations: getSS(m, "violations"),
+		CreatedAt:  time.Unix(getN(m, "created_at"), 0).UTC(),
+		UpdatedAt:  time.Unix(getN(m, "updated_at"), 0).UTC(),
 	}
+}
+
+// local helper: []string -> DynamoDB List(String)
+func avSS(v []string) types.AttributeValue {
+	items := make([]types.AttributeValue, 0, len(v))
+	for _, s := range v {
+		items = append(items, &types.AttributeValueMemberS{Value: s})
+	}
+	return &types.AttributeValueMemberL{Value: items}
+}
+
+// local helper: read List(String) or absent => nil
+func getSS(m map[string]types.AttributeValue, key string) []string {
+	av, ok := m[key]
+	if !ok || av == nil {
+		return nil
+	}
+	l, ok := av.(*types.AttributeValueMemberL)
+	if !ok || len(l.Value) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(l.Value))
+	for _, it := range l.Value {
+		s, ok := it.(*types.AttributeValueMemberS)
+		if !ok {
+			continue
+		}
+		if s.Value == "" {
+			continue
+		}
+		out = append(out, s.Value)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 var _ ports.ReleaseStore = (*ReleaseStore)(nil)

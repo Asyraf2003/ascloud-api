@@ -32,13 +32,13 @@ func (d *Deployer) Deploy(ctx context.Context, msg ports.DeployMessage) error {
 		size = u.SizeBytes
 	}
 	if d.cfg.MaxZipBytes > 0 && size > d.cfg.MaxZipBytes {
-		return d.permanentFail(ctx2, msg, "hosting.zip_too_large")
+		return d.permanentFail(ctx2, msg, "hosting.zip_too_large", nil)
 	}
 
 	zipPath, err := d.downloadZip(ctx2, msg.ObjectKey, msg.UploadID, d.cfg.MaxZipBytes)
 	if err != nil {
 		if err == ErrZipTooLarge {
-			return d.permanentFail(ctx2, msg, "hosting.zip_too_large")
+			return d.permanentFail(ctx2, msg, "hosting.zip_too_large", nil)
 		}
 		return apperr.Wrap(err, "hosting.s3_get_failed", 0, "")
 	}
@@ -46,7 +46,7 @@ func (d *Deployer) Deploy(ctx context.Context, msg ports.DeployMessage) error {
 	extractDir, res, err := d.extractZip(ctx2, zipPath, msg.ReleaseID)
 	if err != nil {
 		if code := zipErrCode(err); code != "" {
-			return d.permanentFail(ctx2, msg, code)
+			return d.permanentFail(ctx2, msg, code, nil)
 		}
 		return apperr.Wrap(err, "hosting.extract_failed", 0, "")
 	}

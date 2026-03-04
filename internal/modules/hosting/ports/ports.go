@@ -27,7 +27,11 @@ type ReleaseStore interface {
 	Put(ctx context.Context, r domain.Release) error
 	Get(ctx context.Context, id domain.ReleaseID) (domain.Release, error)
 	ListBySite(ctx context.Context, siteID domain.SiteID, limit int) ([]domain.Release, error)
-	UpdateStatus(ctx context.Context, id domain.ReleaseID, status domain.ReleaseStatus, sizeBytes int64, errorCode string) error
+
+	// violations:
+	// - nil  => do not touch existing attribute
+	// - []{} => set to empty list (explicit clear)
+	UpdateStatus(ctx context.Context, id domain.ReleaseID, status domain.ReleaseStatus, sizeBytes int64, errorCode string, violations []string) error
 }
 
 type EdgeStore interface {

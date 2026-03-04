@@ -23,13 +23,14 @@ type ReleaseHandler struct {
 func NewReleaseHandler(d *usecase.Dashboard) *ReleaseHandler { return &ReleaseHandler{dash: d} }
 
 type ReleaseResponse struct {
-	ReleaseID     string `json:"release_id"`
-	SiteID        string `json:"site_id"`
-	Status        string `json:"status"`
-	SizeBytes     int64  `json:"size_bytes"`
-	ErrorCode     string `json:"error_code"`
-	CreatedAtUnix int64  `json:"created_at_unix"`
-	UpdatedAtUnix int64  `json:"updated_at_unix"`
+	ReleaseID     string   `json:"release_id"`
+	SiteID        string   `json:"site_id"`
+	Status        string   `json:"status"`
+	SizeBytes     int64    `json:"size_bytes"`
+	ErrorCode     string   `json:"error_code"`
+	Violations    []string `json:"violations,omitempty"`
+	CreatedAtUnix int64    `json:"created_at_unix"`
+	UpdatedAtUnix int64    `json:"updated_at_unix"`
 }
 
 type ListReleasesResponse struct {
@@ -62,6 +63,7 @@ func (h *ReleaseHandler) ListBySite(c echo.Context) error {
 			Status:        string(r.Status),
 			SizeBytes:     r.SizeBytes,
 			ErrorCode:     r.ErrorCode,
+			Violations:    r.Violations,
 			CreatedAtUnix: r.CreatedAt.UTC().Unix(),
 			UpdatedAtUnix: r.UpdatedAt.UTC().Unix(),
 		})
@@ -90,6 +92,7 @@ func (h *ReleaseHandler) GetBySite(c echo.Context) error {
 		Status:        string(r.Status),
 		SizeBytes:     r.SizeBytes,
 		ErrorCode:     r.ErrorCode,
+		Violations:    r.Violations,
 		CreatedAtUnix: r.CreatedAt.UTC().Unix(),
 		UpdatedAtUnix: r.UpdatedAt.UTC().Unix(),
 	})
