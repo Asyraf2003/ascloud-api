@@ -10,7 +10,7 @@ import (
 )
 
 func (d *Deployer) markSuccess(ctx context.Context, msg ports.DeployMessage, sizeBytes int64) error {
-	if err := d.rel.UpdateStatus(ctx, msg.ReleaseID, domain.ReleaseStatusSuccess, sizeBytes, ""); err != nil {
+	if err := d.rel.UpdateStatus(ctx, msg.ReleaseID, domain.ReleaseStatusSuccess, sizeBytes, "", nil); err != nil {
 		return apperr.Wrap(err, "hosting.ddb_release_update_failed", 0, "")
 	}
 	if err := d.sites.UpdateCurrentRelease(ctx, msg.SiteID, msg.ReleaseID); err != nil {

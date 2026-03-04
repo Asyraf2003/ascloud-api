@@ -61,10 +61,11 @@ func (f *fakeSiteStore) UpdateCurrentRelease(_ context.Context, id domain.SiteID
 }
 
 type fakeReleaseStore struct {
-	lastStatus domain.ReleaseStatus
-	lastSize   int64
-	lastCode   string
-	byID       map[string]domain.Release
+	lastStatus     domain.ReleaseStatus
+	lastSize       int64
+	lastCode       string
+	lastViolations []string
+	byID           map[string]domain.Release
 }
 
 func (f *fakeReleaseStore) Put(_ context.Context, r domain.Release) error {
@@ -99,14 +100,18 @@ func (f *fakeReleaseStore) ListBySite(_ context.Context, siteID domain.SiteID, _
 	return out, nil
 }
 
-func (f *fakeReleaseStore) UpdateStatus(_ context.Context, id domain.ReleaseID, st domain.ReleaseStatus, sz int64, code string) error {
-	f.lastStatus, f.lastSize, f.lastCode = st, sz, code
+func (f *fakeReleaseStore) UpdateStatus(_ context.Context, id domain.ReleaseID, st domain.ReleaseStatus, sz int64, code string, violations []string) error {
+	f.lastStatus, f.lastSize, f.lastCode, f.lastViolations = st, sz, code, violations
+
 	if f.byID != nil {
 		r, ok := f.byID[id.String()]
 		if ok {
 			r.Status = st
 			r.SizeBytes = sz
 			r.ErrorCode = code
+			if violations != nil {
+				r.Violations = violations
+			}
 			r.UpdatedAt = time.Now().UTC()
 			f.byID[id.String()] = r
 		}
