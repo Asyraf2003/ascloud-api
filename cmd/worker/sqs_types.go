@@ -16,6 +16,7 @@ func isPermanent(code string) bool {
 		"hosting.zip_too_large",
 		"hosting.zip_slip",
 		"hosting.zip_symlink",
+		"hosting.file_disallowed",
 		"hosting.zip_too_many_files",
 		"hosting.zip_too_deep",
 		"hosting.extract_over_quota":

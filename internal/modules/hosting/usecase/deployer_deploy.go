@@ -45,8 +45,10 @@ func (d *Deployer) Deploy(ctx context.Context, msg ports.DeployMessage) error {
 
 	extractDir, res, err := d.extractZip(ctx2, zipPath, msg.ReleaseID)
 	if err != nil {
-		if code := zipErrCode(err); code != "" {
-			return d.permanentFail(ctx2, msg, code, nil)
+		codes := zipErrCodes(err)
+		if len(codes) > 0 {
+			// primary error_code + full violations list
+			return d.permanentFail(ctx2, msg, codes[0], codes)
 		}
 		return apperr.Wrap(err, "hosting.extract_failed", 0, "")
 	}

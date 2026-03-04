@@ -33,11 +33,12 @@ func (h *UploadHandler) Initiate(c echo.Context) error {
 
 	setNoStore(c)
 	return presenter.Created(c, InitiateUploadResponse{
-		UploadID:      out.UploadID.String(),
-		ObjectKey:     out.ObjectKey,
-		PutURL:        out.PutURL,
-		ExpiresAtUnix: out.ExpiresAtUnix,
-		MaxBytes:      out.MaxBytes,
+		UploadID:            out.UploadID.String(),
+		ObjectKey:           out.ObjectKey,
+		PutURL:              out.PutURL,
+		ExpiresAtUnix:       out.ExpiresAtUnix,
+		MaxBytes:            out.MaxBytes,
+		RequiredContentType: out.ContentType,
 	})
 }
 

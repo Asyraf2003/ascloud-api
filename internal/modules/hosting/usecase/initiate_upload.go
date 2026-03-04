@@ -11,12 +11,15 @@ import (
 	"example.com/your-api/internal/modules/hosting/domain"
 )
 
+const requiredZipContentType = "application/zip"
+
 type InitiateUploadOutput struct {
 	UploadID      domain.UploadID
 	ObjectKey     string
 	PutURL        string
 	ExpiresAtUnix int64
 	MaxBytes      int64
+	ContentType   string
 }
 
 func (s *Service) InitiateUpload(ctx context.Context, siteID domain.SiteID) (InitiateUploadOutput, error) {
@@ -48,5 +51,6 @@ func (s *Service) InitiateUpload(ctx context.Context, siteID domain.SiteID) (Ini
 		PutURL:        url,
 		ExpiresAtUnix: now.Add(s.cfg.PresignTTL).Unix(),
 		MaxBytes:      s.cfg.MaxUploadBytes,
+		ContentType:   requiredZipContentType,
 	}, nil
 }

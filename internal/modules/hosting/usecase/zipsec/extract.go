@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+var disallowedExt = map[string]struct{}{
+	".exe":   {},
+	".dll":   {},
+	".so":    {},
+	".dylib": {},
+	".bat":   {},
+	".cmd":   {},
+	".ps1":   {},
+	".sh":    {},
+}
+
 func Extract(ctx context.Context, zipPath, dest string, opt Options) (Result, error) {
 	zr, err := zip.OpenReader(zipPath)
 	if err != nil {
@@ -19,27 +30,43 @@ func Extract(ctx context.Context, zipPath, dest string, opt Options) (Result, er
 		return Result{}, err
 	}
 
-	var res Result
+	var (
+		res       Result
+		violSet   = map[error]struct{}{}
+		seenFiles int
+	)
+
+	addViolation := func(v error) {
+		if v == nil {
+			return
+		}
+		violSet[v] = struct{}{}
+	}
+
 	for _, f := range zr.File {
 		if err := ctx.Err(); err != nil {
 			return res, err
 		}
 
-		clean, err := cleanZipPath(f.Name, opt.MaxDepth)
-		if err != nil {
-			return res, err
+		clean, cerr := cleanZipPath(f.Name, opt.MaxDepth)
+		if cerr != nil {
+			addViolation(cerr)
+			continue
 		}
 		if clean == "" {
 			continue
 		}
+
 		if isSymlinkOrSpecial(f) {
-			return res, ErrZipSymlink
+			addViolation(ErrZipSymlink)
+			continue
 		}
 
 		full := filepath.Join(dest, clean)
 		rel, rerr := filepath.Rel(dest, full)
 		if rerr != nil || strings.HasPrefix(rel, "..") {
-			return res, ErrZipSlip
+			addViolation(ErrZipSlip)
+			continue
 		}
 
 		if f.FileInfo().IsDir() {
@@ -49,27 +76,65 @@ func Extract(ctx context.Context, zipPath, dest string, opt Options) (Result, er
 			continue
 		}
 
-		if opt.MaxFiles > 0 && res.Files+1 > opt.MaxFiles {
-			return res, ErrTooManyFiles
+		// count entries regardless extracted/blocked (anti zip spam)
+		seenFiles++
+		if opt.MaxFiles > 0 && seenFiles > opt.MaxFiles {
+			addViolation(ErrTooManyFiles)
+			break
 		}
 
-		allow, err := allowedBytes(opt, res.TotalBytes, int64(f.UncompressedSize64))
-		if err != nil {
-			return res, err
+		// denylist minimal executable/script
+		if isDisallowedByExt(clean) {
+			addViolation(ErrDisallowedFile)
+			continue
 		}
 
-		n, err := extractOne(ctx, f, full, allow)
-		if err != nil {
-			return res, err
+		allow, aerr := allowedBytes(opt, res.TotalBytes, int64(f.UncompressedSize64))
+		if aerr != nil {
+			// quota is terminal (avoid heavy work)
+			addViolation(aerr)
+			break
+		}
+
+		n, xerr := extractOne(ctx, f, full, allow)
+		if xerr != nil {
+			// I/O failure is not a "violation": surface as error (transient)
+			return res, xerr
 		}
 		res.Files++
 		res.TotalBytes += n
 	}
 
 	if opt.MaxTotalBytes > 0 && res.TotalBytes > opt.MaxTotalBytes {
-		return res, ErrOverQuota
+		addViolation(ErrOverQuota)
 	}
+
+	if len(violSet) > 0 {
+		// keep legacy behavior for single-violation tests:
+		// return the sentinel directly if only 1 unique violation.
+		if len(violSet) == 1 {
+			for v := range violSet {
+				return res, v
+			}
+		}
+
+		errs := make([]error, 0, len(violSet))
+		for v := range violSet {
+			errs = append(errs, v)
+		}
+		return res, &ViolationsError{Errs: errs}
+	}
+
 	return res, nil
+}
+
+func isDisallowedByExt(clean string) bool {
+	ext := strings.ToLower(filepath.Ext(clean))
+	if ext == "" {
+		return false
+	}
+	_, bad := disallowedExt[ext]
+	return bad
 }
 
 func allowedBytes(opt Options, used int64, fileSize int64) (int64, error) {
@@ -90,3 +155,5 @@ func allowedBytes(opt Options, used int64, fileSize int64) (int64, error) {
 	}
 	return allow, nil
 }
+
+// TODO justify: >100 lines sementara; akan dipecah saat milestone 9.

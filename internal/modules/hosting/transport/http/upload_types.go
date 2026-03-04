@@ -12,11 +12,12 @@ type UploadFlow interface {
 }
 
 type InitiateUploadResponse struct {
-	UploadID      string `json:"upload_id"`
-	ObjectKey     string `json:"object_key"`
-	PutURL        string `json:"put_url"`
-	ExpiresAtUnix int64  `json:"expires_at_unix"`
-	MaxBytes      int64  `json:"max_bytes"`
+	UploadID             string `json:"upload_id"`
+	ObjectKey            string `json:"object_key"`
+	PutURL               string `json:"put_url"`
+	ExpiresAtUnix        int64  `json:"expires_at_unix"`
+	MaxBytes             int64  `json:"max_bytes"`
+	RequiredContentType  string `json:"required_content_type"`
 }
 
 type CompleteUploadResponse struct {

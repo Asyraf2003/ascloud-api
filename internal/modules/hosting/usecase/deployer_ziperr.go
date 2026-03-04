@@ -6,19 +6,34 @@ import (
 	"example.com/your-api/internal/modules/hosting/usecase/zipsec"
 )
 
+func zipErrCodes(err error) []string {
+	// severity order (primary = first match)
+	type m struct {
+		e    error
+		code string
+	}
+	maps := []m{
+		{zipsec.ErrZipSlip, "hosting.zip_slip"},
+		{zipsec.ErrZipSymlink, "hosting.zip_symlink"},
+		{zipsec.ErrDisallowedFile, "hosting.file_disallowed"},
+		{zipsec.ErrTooManyFiles, "hosting.zip_too_many_files"},
+		{zipsec.ErrTooDeep, "hosting.zip_too_deep"},
+		{zipsec.ErrOverQuota, "hosting.extract_over_quota"},
+	}
+
+	out := make([]string, 0, 2)
+	for _, it := range maps {
+		if errors.Is(err, it.e) {
+			out = append(out, it.code)
+		}
+	}
+	return out
+}
+
 func zipErrCode(err error) string {
-	switch {
-	case errors.Is(err, zipsec.ErrZipSlip):
-		return "hosting.zip_slip"
-	case errors.Is(err, zipsec.ErrZipSymlink):
-		return "hosting.zip_symlink"
-	case errors.Is(err, zipsec.ErrTooManyFiles):
-		return "hosting.zip_too_many_files"
-	case errors.Is(err, zipsec.ErrTooDeep):
-		return "hosting.zip_too_deep"
-	case errors.Is(err, zipsec.ErrOverQuota):
-		return "hosting.extract_over_quota"
-	default:
+	codes := zipErrCodes(err)
+	if len(codes) == 0 {
 		return ""
 	}
+	return codes[0]
 }
