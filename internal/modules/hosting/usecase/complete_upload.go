@@ -60,5 +60,21 @@ func (s *Service) CompleteUpload(ctx context.Context, siteID domain.SiteID, uplo
 		return CompleteUploadOutput{}, err
 	}
 
+	// Best-effort audit (jangan bikin enqueue gagal kalau audit down)
+	if s.audit != nil {
+		_ = s.audit.Record(ctx, ports.AuditEvent{
+			SiteID: siteID,
+			Event:  "hosting_upload_complete_enqueued",
+			At:     time.Now(),
+			Meta: map[string]any{
+				"request_id": reqID,
+				"upload_id":  uploadID,
+				"release_id": rid,
+				"object_key": u.ObjectKey,
+				"size_bytes": size,
+			},
+		})
+	}
+
 	return CompleteUploadOutput{Status: domain.UploadStatusQueued, Size: size}, nil
 }

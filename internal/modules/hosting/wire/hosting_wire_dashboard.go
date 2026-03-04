@@ -20,6 +20,8 @@ func WireHostingDashboard(ddb *dynamodb.Client, kvs *cloudfrontkeyvaluestore.Cli
 
 	sitesTable := envTrim("DDB_HOSTING_SITES_TABLE", "hosting_sites")
 	relsTable := envTrim("DDB_HOSTING_RELEASES_TABLE", "hosting_releases")
+	auditTable := envTrim("DDB_AUDIT_EVENTS_TABLE", "audit_events")
+
 	baseDomain := envTrim("HOSTING_BASE_DOMAIN", "asyrafcloud.my.id")
 	kvsARN := strings.TrimSpace(os.Getenv("HOSTING_CLOUDFRONT_KVS_ARN"))
 	if kvsARN == "" {
@@ -34,5 +36,7 @@ func WireHostingDashboard(ddb *dynamodb.Client, kvs *cloudfrontkeyvaluestore.Cli
 		return nil, err
 	}
 
-	return hostinguc.NewDashboard(hostinguc.DashboardConfig{BaseDomain: baseDomain}, sites, rels, edge), nil
+	audit := hostingddb.NewAuditSink(ddb, auditTable)
+
+	return hostinguc.NewDashboard(hostinguc.DashboardConfig{BaseDomain: baseDomain}, sites, rels, edge, audit), nil
 }

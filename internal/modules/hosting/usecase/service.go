@@ -7,8 +7,9 @@ type Service struct {
 	up    ports.UploadStore
 	obj   ports.ObjectStore
 	queue ports.DeployQueue
+	audit ports.AuditSink
 }
 
-func New(cfg Config, up ports.UploadStore, obj ports.ObjectStore, q ports.DeployQueue) *Service {
-	return &Service{cfg: cfg, up: up, obj: obj, queue: q}
+func New(cfg Config, up ports.UploadStore, obj ports.ObjectStore, q ports.DeployQueue, audit ports.AuditSink) *Service {
+	return &Service{cfg: cfg, up: up, obj: obj, queue: q, audit: audit}
 }

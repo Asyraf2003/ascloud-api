@@ -22,3 +22,4 @@ include make/sanity.mk
 include make/sec.mk
 include make/run.mk
 include make/ddb.mk
+include make/aws.mk

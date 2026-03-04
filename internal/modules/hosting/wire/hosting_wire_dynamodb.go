@@ -30,6 +30,7 @@ func WireHostingUploadPipeline(ddb *dynamodb.Client, s3 *s3svc.Client, sqs *sqss
 	}
 
 	table := envTrim("DDB_HOSTING_UPLOADS_TABLE", "hosting_uploads")
+	auditTable := envTrim("DDB_AUDIT_EVENTS_TABLE", "audit_events")
 	bucket := envTrim("HOSTING_S3_BUCKET", "")
 	queueURL := envTrim("HOSTING_SQS_QUEUE_URL", "")
 
@@ -43,7 +44,8 @@ func WireHostingUploadPipeline(ddb *dynamodb.Client, s3 *s3svc.Client, sqs *sqss
 	up := hostingddb.NewUploadStore(ddb, table)
 	obj := hostingaws.NewObjectStore(s3, bucket)
 	q := hostingaws.NewDeployQueue(sqs, queueURL)
+	audit := hostingddb.NewAuditSink(ddb, auditTable)
 
-	svc := hostinguc.New(hostinguc.DefaultConfig(), up, obj, q)
+	svc := hostinguc.New(hostinguc.DefaultConfig(), up, obj, q, audit)
 	return svc, nil
 }

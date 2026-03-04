@@ -27,7 +27,7 @@ func TestDeployer_ZipSlipIsPermanentFail(t *testing.T) {
 	cfg := DefaultDeployConfig()
 	cfg.TmpDir = tempTmpDir(t)
 
-	d := NewDeployer(cfg, up, sites, rel, obj)
+	d := NewDeployer(cfg, up, sites, rel, obj, nil)
 	err := d.Deploy(context.Background(), ports.DeployMessage{
 		SiteID:    "s1",
 		UploadID:  "u1",
